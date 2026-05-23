@@ -1,5 +1,5 @@
 const BASE_URL =
-  "http://localhost:8080";
+  "https://salon-ai-platform-4.onrender.com";
 const SESSION_KEY = "ai_session_id";
 
 function getSessionId() {
