@@ -1,0 +1,151 @@
+package com.salonai.booking.service;
+
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.repository.BookingRepository;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.repository.SalonRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+public class BookingService {
+
+    private static final int MAX_SLOT_PER_TIME = 5;
+
+    private final BookingRepository bookingRepository;
+
+    private final SalonRepository salonRepository;
+
+    public BookingService(
+            BookingRepository bookingRepository,
+            SalonRepository salonRepository
+    ) {
+
+        this.bookingRepository = bookingRepository;
+
+        this.salonRepository = salonRepository;
+    }
+
+    public Booking createBooking(
+            String sessionId,
+            Long salonId,
+            String customerName,
+            String customerPhone,
+            String service,
+            String date,
+            String time
+    ) {
+
+        Optional<Salon> salonOptional =
+                salonRepository.findById(
+                        salonId
+                );
+
+        if (salonOptional.isEmpty()) {
+
+            throw new RuntimeException(
+                    "Salon not found"
+            );
+        }
+
+        int availableSlots =
+                getAvailableSlots(
+                        salonId,
+                        date,
+                        time
+                );
+
+        if (availableSlots <= 0) {
+
+            throw new RuntimeException(
+                    "No slots available"
+            );
+        }
+
+        Booking booking =
+                new Booking();
+
+        booking.setSessionId(
+                sessionId
+        );
+
+        booking.setSalon(
+                salonOptional.get()
+        );
+
+        booking.setCustomerName(
+                customerName
+        );
+
+        booking.setCustomerPhone(
+                customerPhone
+        );
+
+        booking.setService(
+                service
+        );
+
+        booking.setBookingDate(
+                date
+        );
+
+        booking.setBookingTime(
+                time
+        );
+
+        return bookingRepository.save(
+                booking
+        );
+    }
+
+    public int getAvailableSlots(
+            Long salonId,
+            String date,
+            String time
+    ) {
+
+        long bookedCount =
+                bookingRepository
+                        .countBySalonIdAndBookingDateAndBookingTime(
+                                salonId,
+                                date,
+                                time
+                        );
+
+        return MAX_SLOT_PER_TIME
+                - (int) bookedCount;
+    }
+
+    public Optional<Booking> getLatestBooking(
+            String sessionId
+    ) {
+
+        return bookingRepository
+                .findTopBySessionIdOrderByIdDesc(
+                        sessionId
+                );
+    }
+
+    public boolean hasAvailableSlots(
+            Long salonId,
+            String date,
+            String time
+    ) {
+
+        return getAvailableSlots(
+                salonId,
+                date,
+                time
+        ) > 0;
+    }
+
+    public void cancelBooking(
+            Long bookingId
+    ) {
+
+        bookingRepository.deleteById(
+                bookingId
+        );
+    }
+}

@@ -1,0 +1,539 @@
+package com.salonai.ai.controller;
+
+import com.salonai.ai.dto.AiBookingRequest;
+import com.salonai.ai.service.ConversationMemoryService;
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.repository.BookingRepository;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.service.SalonService;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/ai")
+@CrossOrigin("*")
+public class AiController {
+
+    private final SalonService salonService;
+
+    private final BookingRepository bookingRepository;
+
+    private final ConversationMemoryService memoryService;
+
+    public AiController(
+            SalonService salonService,
+            BookingRepository bookingRepository,
+            ConversationMemoryService memoryService
+    ) {
+
+        this.salonService =
+                salonService;
+
+        this.bookingRepository =
+                bookingRepository;
+
+        this.memoryService =
+                memoryService;
+    }
+
+    // =====================================================
+    // CHAT API
+    // =====================================================
+
+    @PostMapping("/chat")
+    public Object chat(
+            @RequestBody Map<String, String> body
+    ) {
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+        try {
+
+            String message =
+                    body.get("message");
+
+            String sessionId =
+                    body.get("sessionId");
+
+            if (
+                    sessionId == null
+                            || sessionId.isBlank()
+            ) {
+
+                sessionId =
+                        UUID.randomUUID().toString();
+            }
+
+            if (
+                    message == null
+                            || message.isBlank()
+            ) {
+
+                response.put(
+                        "reply",
+                        "Please type a message."
+                );
+
+                return response;
+            }
+
+            message =
+                    message.trim();
+
+            String lower =
+                    message.toLowerCase();
+
+            // =====================================================
+            // GET MEMORY
+            // =====================================================
+
+            AiBookingRequest memory =
+                    memoryService.get(sessionId);
+
+            // =====================================================
+            // NEW SESSION
+            // =====================================================
+
+            if (memory == null) {
+
+                memory =
+                        new AiBookingRequest();
+
+                memory.setCurrentStep(
+                        "CITY"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "📍 Which city would you like to book in?\n\nDelhi\nMumbai\nBhimtal"
+                );
+
+                response.put(
+                        "sessionId",
+                        sessionId
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // CITY STEP
+            // =====================================================
+
+            if (
+                    "CITY".equals(
+                            memory.getCurrentStep()
+                    )
+            ) {
+
+                String city =
+                        detectCity(lower);
+
+                if (city == null) {
+
+                    response.put(
+                            "reply",
+                            "❌ Please enter valid city.\n\nDelhi\nMumbai\nBhimtal"
+                    );
+
+                    return response;
+                }
+
+                memory.setCity(city);
+
+                memory.setCurrentStep(
+                        "SERVICE"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "💇 Which service would you like?\n\nHaircut\nSpa\nFacial"
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // SERVICE STEP
+            // =====================================================
+
+            if (
+                    "SERVICE".equals(
+                            memory.getCurrentStep()
+                    )
+            ) {
+
+                String service =
+                        detectService(lower);
+
+                if (service == null) {
+
+                    response.put(
+                            "reply",
+                            "❌ Please choose valid service.\n\nHaircut\nSpa\nFacial"
+                    );
+
+                    return response;
+                }
+
+                memory.setServiceName(
+                        service
+                );
+
+                List<Salon> salons =
+                        salonService.getAllSalons();
+
+                if (
+                        salons.isEmpty()
+                ) {
+
+                    response.put(
+                            "reply",
+                            "❌ No salons available."
+                    );
+
+                    return response;
+                }
+
+                Salon salon =
+                        salons.get(0);
+
+                memory.setSalonId(
+                        salon.getId()
+                );
+
+                memory.setSalonName(
+                        salon.getName()
+                );
+
+                memory.setCurrentStep(
+                        "DATE"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "🏢 Selected Salon: "
+                                + salon.getName()
+                                + "\n\n📅 Which date would you like?\n\nToday\nTomorrow"
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // DATE STEP
+            // =====================================================
+
+            if (
+                    "DATE".equals(
+                            memory.getCurrentStep()
+                    )
+            ) {
+
+                LocalDate date =
+                        parseDate(message);
+
+                if (date == null) {
+
+                    response.put(
+                            "reply",
+                            "❌ Please enter valid date.\n\nToday\nTomorrow\n25-05-2026"
+                    );
+
+                    return response;
+                }
+
+                memory.setBookingDate(
+                        date
+                );
+
+                memory.setCurrentStep(
+                        "TIME"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "⏰ What time would you prefer?\n\n10 AM\n5 PM"
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // TIME STEP
+            // =====================================================
+
+            if (
+                    "TIME".equals(
+                            memory.getCurrentStep()
+                    )
+            ) {
+
+                memory.setBookingTime(
+                        message.toUpperCase()
+                );
+
+                memory.setCurrentStep(
+                        "PHONE"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "📱 Please enter your 10 digit phone number."
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // PHONE STEP
+            // =====================================================
+
+            if (
+                    "PHONE".equals(
+                            memory.getCurrentStep()
+                    )
+            ) {
+
+                String phone =
+                        message.replaceAll(
+                                "[^0-9]",
+                                ""
+                        );
+
+                if (
+                        phone.length() != 10
+                ) {
+
+                    response.put(
+                            "reply",
+                            "❌ Please enter valid 10 digit phone number."
+                    );
+
+                    return response;
+                }
+
+                memory.setPhoneNumber(
+                        phone
+                );
+
+                // =====================================================
+                // SAVE BOOKING
+                // =====================================================
+
+                Booking booking =
+                        new Booking();
+
+                booking.setSalonId(
+                        memory.getSalonId()
+                );
+
+                booking.setSalonName(
+                        memory.getSalonName()
+                );
+
+                booking.setServiceName(
+                        memory.getServiceName()
+                );
+
+                booking.setBookingDate(
+                        memory.getBookingDate()
+                );
+
+                booking.setBookingTime(
+                        memory.getBookingTime()
+                );
+
+                booking.setPhoneNumber(
+                        memory.getPhoneNumber()
+                );
+
+                bookingRepository.save(
+                        booking
+                );
+
+                response.put(
+                        "reply",
+                        "✅ Booking Confirmed!\n\n"
+                                + "🏢 Salon: "
+                                + memory.getSalonName()
+                                + "\n"
+                                + "✨ Service: "
+                                + memory.getServiceName()
+                                + "\n"
+                                + "📅 Date: "
+                                + memory.getBookingDate()
+                                + "\n"
+                                + "⏰ Time: "
+                                + memory.getBookingTime()
+                                + "\n"
+                                + "📱 Phone: "
+                                + memory.getPhoneNumber()
+                );
+
+                memoryService.clear(
+                        sessionId
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // DEFAULT
+            // =====================================================
+
+            response.put(
+                    "reply",
+                    "👋 Welcome to Salon AI\n\nType:\nBook Haircut"
+            );
+
+            return response;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            response.put(
+                    "reply",
+                    "❌ Error: "
+                            + e.getMessage()
+            );
+
+            return response;
+        }
+    }
+
+    // =====================================================
+    // DETECT CITY
+    // =====================================================
+
+    private String detectCity(
+            String text
+    ) {
+
+        List<String> cities =
+                Arrays.asList(
+                        "delhi",
+                        "mumbai",
+                        "bhimtal",
+                        "haldwani",
+                        "noida",
+                        "bangalore"
+                );
+
+        for (String city : cities) {
+
+            if (
+                    text.contains(city)
+            ) {
+
+                return city;
+            }
+        }
+
+        return null;
+    }
+
+    // =====================================================
+    // DETECT SERVICE
+    // =====================================================
+
+    private String detectService(
+            String text
+    ) {
+
+        if (
+                text.contains("hair")
+        ) {
+
+            return "Haircut";
+        }
+
+        if (
+                text.contains("spa")
+        ) {
+
+            return "Spa";
+        }
+
+        if (
+                text.contains("facial")
+        ) {
+
+            return "Facial";
+        }
+
+        return null;
+    }
+
+    // =====================================================
+    // PARSE DATE
+    // =====================================================
+
+    private LocalDate parseDate(
+            String text
+    ) {
+
+        text =
+                text.toLowerCase()
+                        .trim();
+
+        if (
+                text.equals("today")
+        ) {
+
+            return LocalDate.now();
+        }
+
+        if (
+                text.equals("tomorrow")
+        ) {
+
+            return LocalDate.now()
+                    .plusDays(1);
+        }
+
+        try {
+
+            return LocalDate.parse(
+                    text,
+                    DateTimeFormatter.ofPattern(
+                            "dd-MM-yyyy"
+                    )
+            );
+
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+}

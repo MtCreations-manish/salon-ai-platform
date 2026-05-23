@@ -1,0 +1,5 @@
+package com.salonai.staff.service;
+
+public class StaffService {
+
+}

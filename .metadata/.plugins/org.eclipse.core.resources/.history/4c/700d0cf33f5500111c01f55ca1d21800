@@ -1,0 +1,117 @@
+package com.salonai.bookings.service;
+
+import com.salonai.bookings.dto.CreateBookingRequest;
+import com.salonai.bookings.entity.Booking;
+import com.salonai.bookings.repository.BookingRepository;
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.repository.SalonServiceRepository;
+import com.salonai.staff.entity.Staff;
+import com.salonai.staff.repository.StaffRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+@Service
+public class BookingService {
+
+    private final BookingRepository bookingRepository;
+    private final SalonServiceRepository salonServiceRepository;
+    private final StaffRepository staffRepository;
+
+    public BookingService(
+            BookingRepository bookingRepository,
+            SalonServiceRepository salonServiceRepository,
+            StaffRepository staffRepository
+    ) {
+        this.bookingRepository = bookingRepository;
+        this.salonServiceRepository = salonServiceRepository;
+        this.staffRepository = staffRepository;
+    }
+
+    public Booking createBooking(
+            CreateBookingRequest request
+    ) {
+
+        SalonService service =
+                salonServiceRepository.findById(
+                        request.getServiceId()
+                ).orElseThrow();
+
+        Staff staff =
+                staffRepository.findById(
+                        request.getStaffId()
+                ).orElseThrow();
+
+        List<Booking> existingBookings =
+                bookingRepository.findByStaffIdAndBookingDate(
+                        staff.getId(),
+                        request.getBookingDate()
+                );
+
+        LocalTime start =
+                LocalTime.parse(request.getStartTime());
+
+        LocalTime end =
+                start.plusMinutes(
+                        service.getDurationMinutes()
+                );
+
+        for (Booking booking : existingBookings) {
+
+            LocalTime bookedStart =
+                    LocalTime.parse(
+                            booking.getStartTime()
+                    );
+
+            LocalTime bookedEnd =
+                    LocalTime.parse(
+                            booking.getEndTime()
+                    );
+
+            boolean overlaps =
+                    start.isBefore(bookedEnd)
+                    && end.isAfter(bookedStart);
+
+            if (overlaps) {
+                throw new RuntimeException(
+                        "Slot already booked"
+                );
+            }
+        }
+
+        Booking booking = new Booking();
+
+        booking.setCustomerName(
+                request.getCustomerName()
+        );
+
+        booking.setBookingDate(
+                request.getBookingDate()
+        );
+
+        booking.setStartTime(
+                start.format(
+                        DateTimeFormatter.ofPattern("HH:mm")
+                )
+        );
+
+        booking.setEndTime(
+                end.format(
+                        DateTimeFormatter.ofPattern("HH:mm")
+                )
+        );
+
+        booking.setService(service);
+
+        booking.setStaff(staff);
+
+        return bookingRepository.save(booking);
+    }
+
+    public List<Booking> getAllBookings() {
+
+        return bookingRepository.findAll();
+    }
+}

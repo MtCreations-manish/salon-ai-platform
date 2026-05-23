@@ -1,0 +1,8 @@
+package com.salonai.salon.repository;
+
+import com.salonai.salon.entity.Salon;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface SalonRepository
+        extends JpaRepository<Salon, Long> {
+}

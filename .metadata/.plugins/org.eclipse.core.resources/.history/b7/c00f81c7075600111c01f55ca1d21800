@@ -1,0 +1,593 @@
+package com.salonai.ai.controller;
+
+import com.salonai.ai.dto.AiBookingRequest;
+import com.salonai.ai.service.ConversationMemoryService;
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.service.BookingService;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.service.SalonService;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/ai")
+@CrossOrigin("*")
+public class AiController {
+
+    private final SalonService salonService;
+
+    private final BookingService bookingService;
+
+    private final ConversationMemoryService memoryService;
+
+    public AiController(
+            SalonService salonService,
+            BookingService bookingService,
+            ConversationMemoryService memoryService
+    ) {
+
+        this.salonService = salonService;
+        this.bookingService = bookingService;
+        this.memoryService = memoryService;
+    }
+
+    @PostMapping("/chat")
+    public Object chat(
+            @RequestBody Map<String, String> body
+    ) {
+
+        try {
+
+            String sessionId =
+                    body.get("sessionId");
+
+            String userMessage =
+                    body.get("message");
+
+            if (isBlank(sessionId)) {
+
+                sessionId =
+                        UUID.randomUUID().toString();
+            }
+
+            // =========================================
+            // MEMORY
+            // =========================================
+
+            AiBookingRequest request =
+                    memoryService.get(sessionId);
+
+            if (request == null) {
+
+                request =
+                        new AiBookingRequest();
+            }
+
+            request.setLastMessage(userMessage);
+
+            String lower =
+                    userMessage.toLowerCase();
+
+            // =========================================
+            // SERVICE
+            // =========================================
+
+            if (contains(lower,
+                    "haircut",
+                    "hair cut",
+                    "hair",
+                    "cut")) {
+
+                request.setService("Haircut");
+            }
+
+            if (contains(lower,
+                    "spa")) {
+
+                request.setService("Spa");
+            }
+
+            if (contains(lower,
+                    "facial")) {
+
+                request.setService("Facial");
+            }
+
+            if (contains(lower,
+                    "beard")) {
+
+                request.setService("Beard");
+            }
+
+            // =========================================
+            // DATE
+            // =========================================
+
+            if (contains(lower,
+                    "today")) {
+
+                request.setDate(
+                        LocalDate.now().toString()
+                );
+            }
+
+            if (contains(lower,
+                    "tomorrow")) {
+
+                request.setDate(
+                        LocalDate.now()
+                                .plusDays(1)
+                                .toString()
+                );
+            }
+
+            // =========================================
+            // TIME
+            // =========================================
+
+            if (contains(lower,
+                    "10")) {
+
+                request.setTime("10:00 AM");
+            }
+
+            if (contains(lower,
+                    "11")) {
+
+                request.setTime("11:00 AM");
+            }
+
+            if (contains(lower,
+                    "12")) {
+
+                request.setTime("12:00 PM");
+            }
+
+            if (contains(lower,
+                    "1 pm")) {
+
+                request.setTime("01:00 PM");
+            }
+
+            if (contains(lower,
+                    "2 pm")) {
+
+                request.setTime("02:00 PM");
+            }
+
+            if (contains(lower,
+                    "3 pm")) {
+
+                request.setTime("03:00 PM");
+            }
+
+            if (contains(lower,
+                    "4 pm")) {
+
+                request.setTime("04:00 PM");
+            }
+
+            if (contains(lower,
+                    "5 pm")) {
+
+                request.setTime("05:00 PM");
+            }
+
+            // =========================================
+            // CITY
+            // =========================================
+
+            List<String> cities =
+                    Arrays.asList(
+                            "bhimtal",
+                            "haldwani",
+                            "delhi",
+                            "gurgaon",
+                            "noida",
+                            "mumbai"
+                    );
+
+            for (String city : cities) {
+
+                if (lower.contains(city)) {
+
+                    request.setCity(city);
+                }
+            }
+
+            // =========================================
+            // ASK CITY
+            // =========================================
+
+            if (isBlank(request.getCity())) {
+
+                request.setUserMessage(
+                        "📍 Please tell me your city."
+                );
+
+                request.setMissingField(
+                        "city"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // ASK SERVICE
+            // =========================================
+
+            if (isBlank(request.getService())) {
+
+                request.setUserMessage(
+                        "✂️ Which service would you like?"
+                );
+
+                request.setMissingField(
+                        "service"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // ASK DATE
+            // =========================================
+
+            if (isBlank(request.getDate())) {
+
+                request.setUserMessage(
+                        "📅 Which date would you like?"
+                );
+
+                request.setMissingField(
+                        "date"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // ASK TIME
+            // =========================================
+
+            if (isBlank(request.getTime())) {
+
+                request.setUserMessage(
+                        "⏰ What time would you prefer?"
+                );
+
+                request.setMissingField(
+                        "time"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // FIND SALONS
+            // =========================================
+
+            List<Salon> salons =
+                    salonService.findByCity(
+                            request.getCity()
+                    );
+
+            if (salons.isEmpty()) {
+
+                request.setUserMessage(
+                        "❌ No salons found in "
+                                + request.getCity()
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // SALON SELECT
+            // =========================================
+
+            boolean salonMatched = false;
+
+            for (Salon salon : salons) {
+
+                if (lower.contains(
+                        salon.getName().toLowerCase()
+                )) {
+
+                    request.setSalonId(
+                            salon.getId()
+                    );
+
+                    request.setSalonName(
+                            salon.getName()
+                    );
+
+                    salonMatched = true;
+                }
+            }
+
+            if (!salonMatched &&
+                    isBlank(request.getSalonName())) {
+
+                StringBuilder builder =
+                        new StringBuilder();
+
+                builder.append(
+                        "✨ Available salons in "
+                );
+
+                builder.append(
+                        request.getCity()
+                );
+
+                builder.append(":\n\n");
+
+                for (Salon salon : salons) {
+
+                    int slots =
+                            bookingService.getAvailableSlots(
+                                    salon.getId(),
+                                    request.getDate()
+                            );
+
+                    builder.append("🏢 ");
+
+                    builder.append(
+                            salon.getName()
+                    );
+
+                    builder.append(
+                            " - "
+                    );
+
+                    builder.append(
+                            slots
+                    );
+
+                    builder.append(
+                            " slots available\n"
+                    );
+                }
+
+                builder.append(
+                        "\nPlease type salon name."
+                );
+
+                request.setUserMessage(
+                        builder.toString()
+                );
+
+                request.setMissingField(
+                        "salonName"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // CUSTOMER NAME
+            // =========================================
+
+            if (isBlank(
+                    request.getCustomerName()
+            )) {
+
+                if (!contains(
+                        lower,
+                        "matrix",
+                        "royal",
+                        "luxury"
+                )) {
+
+                    request.setCustomerName(
+                            userMessage
+                    );
+                }
+            }
+
+            if (isBlank(
+                    request.getCustomerName()
+            )) {
+
+                request.setUserMessage(
+                        "👤 Please share your name."
+                );
+
+                request.setMissingField(
+                        "customerName"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // PHONE
+            // =========================================
+
+            if (isBlank(
+                    request.getPhoneNumber()
+            )) {
+
+                if (userMessage.matches(
+                        "^[0-9]{10}$"
+                )) {
+
+                    request.setPhoneNumber(
+                            userMessage
+                    );
+                }
+            }
+
+            if (isBlank(
+                    request.getPhoneNumber()
+            )) {
+
+                request.setUserMessage(
+                        "📞 Please share your 10 digit phone number."
+                );
+
+                request.setMissingField(
+                        "phoneNumber"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =========================================
+            // SAVE BOOKING
+            // =========================================
+
+            Booking booking =
+                    new Booking();
+
+            booking.setSalonId(
+                    request.getSalonId()
+            );
+
+            booking.setSalonName(
+                    request.getSalonName()
+            );
+
+            booking.setCustomerName(
+                    request.getCustomerName()
+            );
+
+            booking.setPhoneNumber(
+                    request.getPhoneNumber()
+            );
+
+            booking.setService(
+                    request.getService()
+            );
+
+            booking.setBookingDate(
+                    LocalDate.parse(
+                            request.getDate()
+                    )
+            );
+
+            booking.setBookingTime(
+                    request.getTime()
+            );
+
+            bookingService.saveBooking(
+                    booking
+            );
+
+            // =========================================
+            // SUCCESS RESPONSE
+            // =========================================
+
+            request.setUserMessage(
+                    "✅ Booking Confirmed!\n\n"
+                            + "🏢 Salon: "
+                            + request.getSalonName()
+                            + "\n"
+                            + "✂️ Service: "
+                            + request.getService()
+                            + "\n"
+                            + "📅 Date: "
+                            + request.getDate()
+                            + "\n"
+                            + "⏰ Time: "
+                            + request.getTime()
+                            + "\n"
+                            + "👤 Name: "
+                            + request.getCustomerName()
+                            + "\n"
+                            + "📞 Phone: "
+                            + request.getPhoneNumber()
+            );
+
+            request.setMissingField(null);
+
+            memoryService.clear(
+                    sessionId
+            );
+
+            return request;
+
+        } catch (Exception e) {
+
+            Map<String, Object> error =
+                    new HashMap<>();
+
+            error.put(
+                    "message",
+                    e.getMessage()
+            );
+
+            return error;
+        }
+    }
+
+    // =========================================
+    // HELPERS
+    // =========================================
+
+    private boolean isBlank(
+            String value
+    ) {
+
+        return value == null
+                || value.trim().isEmpty();
+    }
+
+    private boolean contains(
+            String text,
+            String... values
+    ) {
+
+        for (String value : values) {
+
+            if (text.contains(value)) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

@@ -1,0 +1,14 @@
+package com.salonai.salon.repository;
+
+import com.salonai.salon.entity.Salon;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface SalonRepository
+        extends JpaRepository<Salon, Long> {
+
+    List<Salon> findByCityIgnoreCase(
+            String city
+    );
+}

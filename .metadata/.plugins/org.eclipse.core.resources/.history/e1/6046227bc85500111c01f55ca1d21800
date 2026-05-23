@@ -1,0 +1,15 @@
+package com.salonai.booking.repository;
+
+import com.salonai.booking.entity.Booking;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface BookingRepository
+        extends JpaRepository<Booking, Long> {
+
+    List<Booking> findByStaffIdAndBookingDate(
+            Long staffId,
+            String bookingDate
+    );
+}

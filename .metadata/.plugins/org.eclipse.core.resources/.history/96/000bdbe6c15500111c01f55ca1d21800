@@ -1,0 +1,5 @@
+package com.salonai.ai.service;
+
+public class ConversationMemoryService {
+
+}

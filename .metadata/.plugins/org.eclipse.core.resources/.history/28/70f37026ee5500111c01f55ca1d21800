@@ -1,0 +1,452 @@
+package com.salonai.ai.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.salonai.ai.dto.AiBookingRequest;
+import com.salonai.ai.service.ConversationMemoryService;
+import com.salonai.booking.dto.SalonAvailability;
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.service.BookingService;
+import com.salonai.booking.service.SlotService;
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.service.BusinessService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/ai")
+@CrossOrigin("*")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final BusinessService businessService;
+
+    private final ConversationMemoryService memoryService;
+
+    private final BookingService bookingService;
+
+    private final SlotService slotService;
+
+    private final ObjectMapper objectMapper;
+
+    public AiController(
+            ChatClient.Builder builder,
+            BusinessService businessService,
+            ConversationMemoryService memoryService,
+            BookingService bookingService,
+            SlotService slotService,
+            ObjectMapper objectMapper
+    ) {
+
+        this.chatClient =
+                builder.build();
+
+        this.businessService =
+                businessService;
+
+        this.memoryService =
+                memoryService;
+
+        this.bookingService =
+                bookingService;
+
+        this.slotService =
+                slotService;
+
+        this.objectMapper =
+                objectMapper;
+    }
+
+    @PostMapping("/chat")
+    public Object chat(
+            @RequestBody Map<String, String> body
+    ) {
+
+        try {
+
+            String sessionId =
+                    body.get("sessionId");
+
+            String userMessage =
+                    body.get("message");
+
+            List<SalonService> services =
+                    businessService.getAllServices();
+
+            StringBuilder serviceNames =
+                    new StringBuilder();
+
+            for (SalonService service : services) {
+
+                serviceNames.append(
+                        service.getName()
+                ).append(", ");
+            }
+
+            Map<String, String> memory =
+                    memoryService.getMemory(
+                            sessionId
+                    );
+
+            String prompt =
+                    """
+                    You are an AI salon booking assistant.
+
+                    Today's date is:
+                    """ + LocalDate.now() +
+
+                    """
+
+                    Available services:
+                    """ + serviceNames +
+
+                    """
+
+                    Existing conversation memory:
+                    """ + memory +
+
+                    """
+
+                    Understand user intent.
+
+                    VALID INTENTS:
+                    - BOOK
+                    - SERVICE_LIST
+                    - AVAILABILITY
+                    - BOOKING_DETAILS
+                    - UNKNOWN
+
+                    Return STRICT JSON ONLY.
+
+                    FORMAT:
+
+                    {
+                      "intent":"",
+                      "service":"",
+                      "date":"",
+                      "time":"",
+                      "salonId":"",
+                      "customerName":"",
+                      "customerPhone":""
+                    }
+
+                    USER MESSAGE:
+                    """ + userMessage;
+
+            String response =
+                    chatClient.prompt()
+                            .user(prompt)
+                            .call()
+                            .content();
+
+            response =
+                    response
+                            .replace("```json", "")
+                            .replace("```", "")
+                            .trim();
+
+            AiBookingRequest aiRequest =
+                    objectMapper.readValue(
+                            response,
+                            AiBookingRequest.class
+                    );
+
+            // =========================
+            // SAVE MEMORY
+            // =========================
+
+            if (aiRequest.getService() != null
+                    && !aiRequest.getService().isBlank()) {
+
+                memoryService.saveMemory(
+                        sessionId,
+                        "service",
+                        aiRequest.getService()
+                );
+            }
+
+            if (aiRequest.getDate() != null
+                    && !aiRequest.getDate().isBlank()) {
+
+                memoryService.saveMemory(
+                        sessionId,
+                        "date",
+                        aiRequest.getDate()
+                );
+            }
+
+            if (aiRequest.getTime() != null
+                    && !aiRequest.getTime().isBlank()) {
+
+                memoryService.saveMemory(
+                        sessionId,
+                        "time",
+                        aiRequest.getTime()
+                );
+            }
+
+            if (aiRequest.getSalonId() != null
+                    && !aiRequest.getSalonId().isBlank()) {
+
+                memoryService.saveMemory(
+                        sessionId,
+                        "salonId",
+                        aiRequest.getSalonId()
+                );
+            }
+
+            if (aiRequest.getCustomerName() != null
+                    && !aiRequest.getCustomerName().isBlank()) {
+
+                memoryService.saveMemory(
+                        sessionId,
+                        "customerName",
+                        aiRequest.getCustomerName()
+                );
+            }
+
+            if (aiRequest.getCustomerPhone() != null
+                    && !aiRequest.getCustomerPhone().isBlank()) {
+
+                memoryService.saveMemory(
+                        sessionId,
+                        "customerPhone",
+                        aiRequest.getCustomerPhone()
+                );
+            }
+
+            memory =
+                    memoryService.getMemory(
+                            sessionId
+                    );
+
+            // =========================
+            // SERVICE LIST
+            // =========================
+
+            if ("SERVICE_LIST".equalsIgnoreCase(
+                    aiRequest.getIntent()
+            )) {
+
+                return Map.of(
+                        "intent",
+                        "SERVICE_LIST",
+
+                        "services",
+                        services
+                );
+            }
+
+            // =========================
+            // BOOKING DETAILS
+            // =========================
+
+            if ("BOOKING_DETAILS".equalsIgnoreCase(
+                    aiRequest.getIntent()
+            )) {
+
+                Optional<Booking> booking =
+                        bookingService.getLatestBooking(
+                                sessionId
+                        );
+
+                if (booking.isPresent()) {
+
+                    Booking b =
+                            booking.get();
+
+                    return Map.of(
+                            "intent",
+                            "BOOKING_DETAILS",
+
+                            "message",
+                            "Your booking is for "
+                                    + b.getService()
+                                    + " on "
+                                    + b.getBookingDate()
+                                    + " at "
+                                    + b.getBookingTime()
+                    );
+                }
+
+                return Map.of(
+                        "message",
+                        "No booking found"
+                );
+            }
+
+            // =========================
+            // MISSING SERVICE
+            // =========================
+
+            if (!memory.containsKey("service")) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "service",
+
+                        "userMessage",
+                        "Which service would you like to book?"
+                );
+            }
+
+            // =========================
+            // MISSING DATE
+            // =========================
+
+            if (!memory.containsKey("date")) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "date",
+
+                        "userMessage",
+                        "Please provide booking date."
+                );
+            }
+
+            // =========================
+            // MISSING TIME
+            // =========================
+
+            if (!memory.containsKey("time")) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "time",
+
+                        "userMessage",
+                        "Please provide preferred time."
+                );
+            }
+
+            // =========================
+            // MISSING SALON
+            // =========================
+
+            if (!memory.containsKey("salonId")) {
+
+                List<SalonAvailability> salons =
+                        slotService.getAvailableSalons(
+                                memory.get("date"),
+                                memory.get("time")
+                        );
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "salonId",
+
+                        "availableSalons",
+                        salons,
+
+                        "userMessage",
+                        "Please select a salon."
+                );
+            }
+
+            // =========================
+            // MISSING NAME
+            // =========================
+
+            if (!memory.containsKey("customerName")) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "customerName",
+
+                        "userMessage",
+                        "Please provide your name."
+                );
+            }
+
+            // =========================
+            // MISSING PHONE
+            // =========================
+
+            if (!memory.containsKey("customerPhone")) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "customerPhone",
+
+                        "userMessage",
+                        "Please provide your phone number."
+                );
+            }
+
+            // =========================
+            // CREATE BOOKING
+            // =========================
+
+            Booking booking =
+                    bookingService.createBooking(
+                            sessionId,
+                            Long.parseLong(
+                                    memory.get("salonId")
+                            ),
+                            memory.get("customerName"),
+                            memory.get("customerPhone"),
+                            memory.get("service"),
+                            memory.get("date"),
+                            memory.get("time")
+                    );
+
+            memoryService.clearMemory(
+                    sessionId
+            );
+
+            return Map.of(
+                    "intent",
+                    "BOOK",
+
+                    "message",
+                    "Booking confirmed successfully.",
+
+                    "bookingId",
+                    booking.getId(),
+
+                    "service",
+                    booking.getService(),
+
+                    "date",
+                    booking.getBookingDate(),
+
+                    "time",
+                    booking.getBookingTime()
+            );
+
+        } catch (Exception e) {
+
+            return Map.of(
+                    "error",
+                    "AI parsing failed",
+
+                    "details",
+                    e.getMessage()
+            );
+        }
+    }
+}

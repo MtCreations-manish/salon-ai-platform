@@ -1,0 +1,64 @@
+package com.salonai.booking.service;
+
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.repository.BookingRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class BookingService {
+
+    private final BookingRepository bookingRepository;
+
+    public BookingService(
+            BookingRepository bookingRepository
+    ) {
+
+        this.bookingRepository =
+                bookingRepository;
+    }
+
+    // =====================================
+    // SAVE BOOKING
+    // =====================================
+
+    public Booking saveBooking(
+            Booking booking
+    ) {
+
+        return bookingRepository.save(
+                booking
+        );
+    }
+
+    // =====================================
+    // GET ALL
+    // =====================================
+
+    public List<Booking> getAllBookings() {
+
+        return bookingRepository.findAll();
+    }
+
+    // =====================================
+    // AVAILABLE SLOTS
+    // =====================================
+
+    public int getAvailableSlots(
+            Long salonId,
+            String date
+    ) {
+
+        long bookedCount =
+                bookingRepository
+                        .countBySalonIdAndBookingDate(
+                                salonId,
+                                java.time.LocalDate.parse(date)
+                        );
+
+        int totalSlots = 10;
+
+        return totalSlots - (int) bookedCount;
+    }
+}

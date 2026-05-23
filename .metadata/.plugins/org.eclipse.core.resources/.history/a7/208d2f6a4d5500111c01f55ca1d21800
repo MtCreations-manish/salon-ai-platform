@@ -1,0 +1,97 @@
+package com.salonai.ai.controller;
+
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.service.BusinessService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final BusinessService businessService;
+
+    public AiController(
+            ChatClient.Builder builder,
+            BusinessService businessService
+    ) {
+
+        this.chatClient = builder.build();
+
+        this.businessService = businessService;
+    }
+
+    @PostMapping("/chat")
+    public Map<String, String> chat(
+            @RequestBody Map<String, String> request
+    ) {
+
+        String message =
+                request.get("message");
+
+        List<SalonService> services =
+                businessService.getAllServices();
+
+        String serviceData =
+                services.stream()
+                        .map(service ->
+                                service.getName()
+                        )
+                        .collect(Collectors.joining(", "));
+
+        String prompt = """
+                You are a salon booking extraction engine.
+
+                AVAILABLE SERVICES:
+                %s
+
+                TODAY DATE:
+                2026-05-22
+
+                INSTRUCTIONS:
+                1. Extract booking information
+                2. ONLY return valid raw JSON
+                3. DO NOT add markdown
+                4. DO NOT add explanations
+                5. DO NOT add extra text
+                6. DO NOT modify user intent
+                7. NEVER invent unavailable services
+                8. If service unavailable return UNKNOWN
+                9. Convert relative dates like tomorrow properly
+                10. Time format must be HH:mm
+
+                VALID JSON FORMAT ONLY:
+
+                {
+                  "intent": "",
+                  "service": "",
+                  "date": "",
+                  "time": ""
+                }
+
+                INTENT VALUES:
+                BOOK
+                RECOMMEND
+                UNKNOWN
+                """.formatted(serviceData);
+
+        String response =
+                chatClient.prompt()
+                        .system(prompt)
+                        .user(message)
+                        .call()
+                        .content()
+                        .trim();
+
+        return Map.of(
+                "response",
+                response
+        );
+    }
+}

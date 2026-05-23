@@ -1,0 +1,473 @@
+package com.salonai.ai.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.salonai.ai.dto.AiBookingRequest;
+import com.salonai.ai.service.ConversationMemoryService;
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.repository.BookingRepository;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.service.SalonService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClient.Builder;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/ai")
+@CrossOrigin("*")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final SalonService salonService;
+
+    private final BookingRepository bookingRepository;
+
+    private final ConversationMemoryService memoryService;
+
+    private final ObjectMapper objectMapper;
+
+    public AiController(
+            Builder builder,
+            SalonService salonService,
+            BookingRepository bookingRepository,
+            ConversationMemoryService memoryService,
+            ObjectMapper objectMapper
+    ) {
+
+        this.chatClient =
+                builder.build();
+
+        this.salonService =
+                salonService;
+
+        this.bookingRepository =
+                bookingRepository;
+
+        this.memoryService =
+                memoryService;
+
+        this.objectMapper =
+                objectMapper;
+    }
+
+    @PostMapping("/chat")
+    public Object chat(
+            @RequestBody Map<String, String> body
+    ) {
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+        try {
+
+            String message =
+                    body.get("message");
+
+            String sessionId =
+                    body.get("sessionId");
+
+            if (sessionId == null || sessionId.isBlank()) {
+
+                sessionId =
+                        UUID.randomUUID().toString();
+            }
+
+            AiBookingRequest memory =
+                    memoryService.get(sessionId);
+
+            if (memory == null) {
+
+                memory =
+                        new AiBookingRequest();
+            }
+
+            message =
+                    message.toLowerCase();
+
+            // =========================================
+            // CITY
+            // =========================================
+
+            if (memory.getCity() == null) {
+
+                String city =
+                        findCity(message);
+
+                if (city == null) {
+
+                    response.put(
+                            "reply",
+                            "📍 Please tell me your city first."
+                    );
+
+                    response.put(
+                            "sessionId",
+                            sessionId
+                    );
+
+                    return response;
+                }
+
+                memory.setCity(city);
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+            }
+
+            // =========================================
+            // SERVICE
+            // =========================================
+
+            if (memory.getServiceName() == null) {
+
+                if (contains(message, "hair")) {
+
+                    memory.setServiceName(
+                            "Haircut"
+                    );
+
+                } else if (contains(message, "spa")) {
+
+                    memory.setServiceName(
+                            "Spa"
+                    );
+
+                } else if (contains(message, "facial")) {
+
+                    memory.setServiceName(
+                            "Facial"
+                    );
+
+                } else {
+
+                    response.put(
+                            "reply",
+                            "✂️ Which service would you like?\nExamples:\n• Haircut\n• Spa\n• Facial"
+                    );
+
+                    response.put(
+                            "sessionId",
+                            sessionId
+                    );
+
+                    return response;
+                }
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+            }
+
+            // =========================================
+            // SALON
+            // =========================================
+
+            if (memory.getSalonId() == null) {
+
+                List<Salon> salons =
+
+                if (salons.isEmpty()) {
+
+                    response.put(
+                            "reply",
+                            "❌ No salons available."
+                    );
+
+                    return response;
+                }
+
+                Salon selectedSalon =
+                        salons.get(0);
+
+                memory.setSalonId(
+                        selectedSalon.getId()
+                );
+
+                memory.setSalonName(
+                        selectedSalon.getSalonName()
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "✨ Available salons in "
+                                + memory.getCity()
+                                + ":\n🏢 "
+                                + selectedSalon.getSalonName()
+                                + "\n\n📅 Which date would you like?"
+                );
+
+                response.put(
+                        "sessionId",
+                        sessionId
+                );
+
+                return response;
+            }
+
+            // =========================================
+            // DATE
+            // =========================================
+
+            if (memory.getBookingDate() == null) {
+
+                LocalDate parsedDate =
+                        parseDate(message);
+
+                if (parsedDate == null) {
+
+                    response.put(
+                            "reply",
+                            "📅 Which date would you like?\nExamples:\n• tomorrow\n• today\n• 25\n• 25-05-2026"
+                    );
+
+                    response.put(
+                            "sessionId",
+                            sessionId
+                    );
+
+                    return response;
+                }
+
+                memory.setBookingDate(
+                        parsedDate
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "⏰ What time would you prefer?"
+                );
+
+                response.put(
+                        "sessionId",
+                        sessionId
+                );
+
+                return response;
+            }
+
+            // =========================================
+            // TIME
+            // =========================================
+
+            if (memory.getBookingTime() == null) {
+
+                memory.setBookingTime(
+                        message.toUpperCase()
+                );
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                response.put(
+                        "reply",
+                        "📱 Please share your phone number."
+                );
+
+                response.put(
+                        "sessionId",
+                        sessionId
+                );
+
+                return response;
+            }
+
+            // =========================================
+            // PHONE
+            // =========================================
+
+            if (memory.getPhoneNumber() == null) {
+
+                memory.setPhoneNumber(message);
+
+                memoryService.save(
+                        sessionId,
+                        memory
+                );
+
+                Booking booking =
+                        new Booking();
+
+                booking.setSalonId(
+                        memory.getSalonId()
+                );
+
+                booking.setSalonName(
+                        memory.getSalonName()
+                );
+
+                booking.setServiceName(
+                        memory.getServiceName()
+                );
+
+                booking.setBookingDate(
+                        memory.getBookingDate()
+                );
+
+                booking.setBookingTime(
+                        memory.getBookingTime()
+                );
+
+                booking.setPhoneNumber(
+                        memory.getPhoneNumber()
+                );
+
+                bookingRepository.save(
+                        booking
+                );
+
+                response.put(
+                        "reply",
+                        "✅ Booking Confirmed!\n\n"
+                                + "🏢 Salon: " + memory.getSalonName()
+                                + "\n✂️ Service: " + memory.getServiceName()
+                                + "\n📅 Date: " + memory.getBookingDate()
+                                + "\n⏰ Time: " + memory.getBookingTime()
+                );
+
+                memoryService.clear(
+                        sessionId
+                );
+
+                response.put(
+                        "sessionId",
+                        sessionId
+                );
+
+                return response;
+            }
+
+            // =========================================
+            // DEFAULT AI RESPONSE
+            // =========================================
+
+            String aiResponse =
+                    chatClient.prompt()
+                            .user(message)
+                            .call()
+                            .content();
+
+            response.put(
+                    "reply",
+                    aiResponse
+            );
+
+            response.put(
+                    "sessionId",
+                    sessionId
+            );
+
+            return response;
+
+        } catch (Exception e) {
+
+            response.put(
+                    "reply",
+                    "❌ Error: " + e.getMessage()
+            );
+
+            return response;
+        }
+    }
+
+    // ===================================================
+    // HELPERS
+    // ===================================================
+
+    private boolean contains(
+            String text,
+            String value
+    ) {
+
+        return text != null &&
+                text.toLowerCase().contains(
+                        value.toLowerCase()
+                );
+    }
+
+    private String findCity(String text) {
+
+        List<String> cities =
+                Arrays.asList(
+                        "delhi",
+                        "mumbai",
+                        "bhimtal",
+                        "haldwani",
+                        "noida",
+                        "bangalore"
+                );
+
+        for (String city : cities) {
+
+            if (contains(text, city)) {
+
+                return city;
+            }
+        }
+
+        return null;
+    }
+
+    private LocalDate parseDate(String text) {
+
+        text =
+                text.toLowerCase().trim();
+
+        if (text.equals("today")) {
+
+            return LocalDate.now();
+        }
+
+        if (text.equals("tomorrow")) {
+
+            return LocalDate.now().plusDays(1);
+        }
+
+        if (text.matches("\\d{1,2}")) {
+
+            int day =
+                    Integer.parseInt(text);
+
+            LocalDate now =
+                    LocalDate.now();
+
+            return LocalDate.of(
+                    now.getYear(),
+                    now.getMonth(),
+                    day
+            );
+        }
+
+        try {
+
+            return LocalDate.parse(
+                    text,
+                    DateTimeFormatter.ofPattern(
+                            "dd-MM-yyyy"
+                    )
+            );
+
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+}

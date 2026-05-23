@@ -1,0 +1,5 @@
+package com.salonai.bookings;
+
+public class SalonAvailability {
+
+}

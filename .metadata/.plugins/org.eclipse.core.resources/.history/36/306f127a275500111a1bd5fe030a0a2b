@@ -1,0 +1,5 @@
+package com.salonai.security;
+
+public class JwtService {
+
+}

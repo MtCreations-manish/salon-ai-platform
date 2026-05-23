@@ -1,0 +1,49 @@
+package com.salonai.ai.service;
+
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+public class ConversationMemoryService {
+
+    private final Map<String, Map<String, String>>
+            memory = new HashMap<>();
+
+    public Map<String, String> getMemory(
+            String sessionId
+    ) {
+
+        return memory.computeIfAbsent(
+                sessionId,
+                k -> new HashMap<>()
+        );
+    }
+
+    public void saveField(
+            String sessionId,
+            String key,
+            String value
+    ) {
+
+        getMemory(sessionId)
+                .put(key, value);
+    }
+
+    public String getField(
+            String sessionId,
+            String key
+    ) {
+
+        return getMemory(sessionId)
+                .get(key);
+    }
+
+    public void clearMemory(
+            String sessionId
+    ) {
+
+        memory.remove(sessionId);
+    }
+}

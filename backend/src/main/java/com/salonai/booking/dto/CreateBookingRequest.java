@@ -1,0 +1,64 @@
+package com.salonai.booking.dto;
+
+public class CreateBookingRequest {
+
+    private String customerName;
+
+    private String bookingDate;
+
+    private String startTime;
+
+    private Long serviceId;
+
+    private Long staffId;
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(
+            String customerName
+    ) {
+        this.customerName = customerName;
+    }
+
+    public String getBookingDate() {
+        return bookingDate;
+    }
+
+    public void setBookingDate(
+            String bookingDate
+    ) {
+        this.bookingDate = bookingDate;
+    }
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(
+            String startTime
+    ) {
+        this.startTime = startTime;
+    }
+
+    public Long getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(
+            Long serviceId
+    ) {
+        this.serviceId = serviceId;
+    }
+
+    public Long getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(
+            Long staffId
+    ) {
+        this.staffId = staffId;
+    }
+}

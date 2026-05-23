@@ -1,0 +1,108 @@
+package com.salonai.booking.entity;
+
+import jakarta.persistence.*;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "bookings")
+public class Booking {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // =========================================
+    // SALON
+    // =========================================
+
+    private Long salonId;
+
+    private String salonName;
+
+    // =========================================
+    // CUSTOMER
+    // =========================================
+
+    private String customerName;
+
+    private String customerPhone;
+
+    // =========================================
+    // BOOKING
+    // =========================================
+
+    private String service;
+
+    private LocalDate bookingDate;
+
+    private String bookingTime;
+
+    // =========================================
+    // GETTERS & SETTERS
+    // =========================================
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getSalonId() {
+        return salonId;
+    }
+
+    public void setSalonId(Long salonId) {
+        this.salonId = salonId;
+    }
+
+    public String getSalonName() {
+        return salonName;
+    }
+
+    public void setSalonName(String salonName) {
+        this.salonName = salonName;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
+
+    public String getService() {
+        return service;
+    }
+
+    public void setService(String service) {
+        this.service = service;
+    }
+
+    public LocalDate getBookingDate() {
+        return bookingDate;
+    }
+
+    public void setBookingDate(LocalDate bookingDate) {
+        this.bookingDate = bookingDate;
+    }
+
+    public String getBookingTime() {
+        return bookingTime;
+    }
+
+    public void setBookingTime(String bookingTime) {
+        this.bookingTime = bookingTime;
+    }
+}

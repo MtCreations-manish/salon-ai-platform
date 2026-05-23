@@ -1,0 +1,127 @@
+package com.salonai.booking.service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.repository.BookingRepository;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.repository.SalonRepository;
+
+@Service
+public class BookingService {
+
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private SalonRepository salonRepository;
+
+    // =========================================
+    // CREATE BOOKING
+    // =========================================
+
+    public Booking createBooking(
+            String sessionId,
+            Long salonId,
+            String customerName,
+            String customerPhone,
+            String service,
+            String bookingDate,
+            String bookingTime
+    ) {
+
+        Salon salon = salonRepository.findById(salonId)
+                .orElseThrow(() ->
+                        new RuntimeException("Salon not found"));
+
+        Booking booking = new Booking();
+
+        booking.setSalon(salon);
+
+        booking.setCustomerName(customerName);
+
+        booking.setCustomerPhone(customerPhone);
+
+        booking.setService(service);
+
+        booking.setBookingDate(
+                LocalDate.parse(bookingDate)
+        );
+
+        booking.setBookingTime(bookingTime);
+
+        booking.setStatus("CONFIRMED");
+
+        return bookingRepository.save(booking);
+    }
+
+    // =========================================
+    // AVAILABLE SLOTS
+    // =========================================
+
+    public int getAvailableSlots(
+            Long salonId,
+            String bookingDate
+    ) {
+
+        LocalDate date =
+                LocalDate.parse(bookingDate);
+
+        List<Booking> bookings =
+                bookingRepository.findBySalonIdAndBookingDate(
+                        salonId,
+                        date
+                );
+
+        int totalSlots = 10;
+
+        int bookedSlots = bookings.size();
+
+        return totalSlots - bookedSlots;
+    }
+
+    // =========================================
+    // OVERLOADED METHOD
+    // =========================================
+
+    public int getAvailableSlots(
+            Long salonId,
+            String service,
+            String bookingDate
+    ) {
+
+        return getAvailableSlots(
+                salonId,
+                bookingDate
+        );
+    }
+
+    // =========================================
+    // GET ALL BOOKINGS
+    // =========================================
+
+    public List<Booking> getAllBookings() {
+
+        return bookingRepository.findAll();
+    }
+
+    // =========================================
+    // CANCEL BOOKING
+    // =========================================
+
+    public void cancelBooking(Long bookingId) {
+
+        Booking booking =
+                bookingRepository.findById(bookingId)
+                        .orElseThrow(() ->
+                                new RuntimeException("Booking not found"));
+
+        booking.setStatus("CANCELLED");
+
+        bookingRepository.save(booking);
+    }
+}

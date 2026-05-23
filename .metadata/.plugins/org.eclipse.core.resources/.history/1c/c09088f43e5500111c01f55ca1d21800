@@ -1,0 +1,5 @@
+package com.salonai.staff.entity;
+
+public class Staff {
+
+}

@@ -1,0 +1,5 @@
+package com.salonai.bookings.dto;
+
+public class SalonAvailability {
+
+}

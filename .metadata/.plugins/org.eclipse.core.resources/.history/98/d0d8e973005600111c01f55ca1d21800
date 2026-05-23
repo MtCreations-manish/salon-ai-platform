@@ -1,0 +1,20 @@
+package com.salonai.booking.repository;
+
+import com.salonai.booking.entity.Booking;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface BookingRepository
+        extends JpaRepository<Booking, Long> {
+
+    long countBySalonIdAndBookingDateAndBookingTime(
+            Long salonId,
+            String bookingDate,
+            String bookingTime
+    );
+
+    Optional<Booking> findTopBySessionIdOrderByIdDesc(
+            String sessionId
+    );
+}

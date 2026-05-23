@@ -1,0 +1,35 @@
+package com.salonai.booking.controller;
+
+import com.salonai.booking.dto.CreateBookingRequest;
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.service.BookingService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/bookings")
+public class BookingController {
+
+    private final BookingService bookingService;
+
+    public BookingController(
+            BookingService bookingService
+    ) {
+        this.bookingService = bookingService;
+    }
+
+    @PostMapping
+    public Booking createBooking(
+            @RequestBody CreateBookingRequest request
+    ) {
+
+        return bookingService.createBooking(request);
+    }
+
+    @GetMapping
+    public List<Booking> getAllBookings() {
+
+        return bookingService.getAllBookings();
+    }
+}

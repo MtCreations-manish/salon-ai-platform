@@ -1,0 +1,63 @@
+@PostMapping("/chat")
+public Map<String, String> chat(
+        @RequestBody Map<String, String> request
+) {
+
+    String message =
+            request.get("message");
+
+    List<SalonService> services =
+            businessService.getAllServices();
+
+    String serviceData =
+            services.stream()
+                    .map(service ->
+                            service.getName()
+                    )
+                    .collect(Collectors.joining(", "));
+
+    String prompt = """
+            You are a salon booking AI assistant.
+
+            Available services:
+            %s
+
+            Your task:
+            Extract booking information.
+
+            STRICT RULES:
+            - NEVER invent services
+            - NEVER invent names
+            - ONLY use available services
+            - Return ONLY JSON
+            - No explanation
+            - No markdown
+
+            JSON format:
+
+            {
+              "intent": "",
+              "service": "",
+              "date": "",
+              "time": ""
+            }
+
+            If booking request detected:
+            intent = BOOK
+
+            If recommendation request:
+            intent = RECOMMEND
+            """.formatted(serviceData);
+
+    String response =
+            chatClient.prompt()
+                    .system(prompt)
+                    .user(message)
+                    .call()
+                    .content();
+
+    return Map.of(
+            "response",
+            response
+    );
+}

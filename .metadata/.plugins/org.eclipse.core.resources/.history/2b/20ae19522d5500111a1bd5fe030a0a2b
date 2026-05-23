@@ -1,0 +1,5 @@
+package com.salonai.salon.repository;
+
+public class SalonRepository {
+
+}

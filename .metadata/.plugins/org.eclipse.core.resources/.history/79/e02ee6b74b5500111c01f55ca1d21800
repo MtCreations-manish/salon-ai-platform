@@ -1,0 +1,80 @@
+package com.salonai.ai.controller;
+
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.service.BusinessService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final BusinessService businessService;
+
+    public AiController(
+            ChatClient.Builder builder,
+            BusinessService businessService
+    ) {
+
+        this.chatClient = builder.build();
+
+        this.businessService = businessService;
+    }
+
+    @PostMapping("/chat")
+    public Map<String, String> chat(
+            @RequestBody Map<String, String> request
+    ) {
+
+        String message =
+                request.get("message");
+
+        List<SalonService> services =
+                businessService.getAllServices();
+
+        String serviceData =
+                services.stream()
+                        .map(service ->
+                                service.getName()
+                                + " - ₹"
+                                + service.getPrice()
+                                + " - "
+                                + service.getDurationMinutes()
+                                + " mins"
+                        )
+                        .collect(Collectors.joining("\n"));
+
+        String prompt = """
+                You are an AI salon booking assistant.
+
+                Available salon services:
+
+                %s
+
+                Rules:
+                - recommend ONLY services from the list
+                - do not invent fake services
+                - keep response short
+                - be professional
+                - encourage booking
+                """.formatted(serviceData);
+
+        String response =
+                chatClient.prompt()
+                        .system(prompt)
+                        .user(message)
+                        .call()
+                        .content();
+
+        return Map.of(
+                "response",
+                response
+        );
+    }
+}

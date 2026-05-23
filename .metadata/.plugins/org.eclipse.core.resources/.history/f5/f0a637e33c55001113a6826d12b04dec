@@ -1,0 +1,5 @@
+package com.salonai.service.dto;
+
+public class CreateServiceRequest {
+
+}

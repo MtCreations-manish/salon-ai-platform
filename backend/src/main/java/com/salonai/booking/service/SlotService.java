@@ -1,0 +1,82 @@
+package com.salonai.booking.service;
+
+import com.salonai.bookings.dto.SalonAvailability;
+import com.salonai.booking.repository.BookingRepository;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.repository.SalonRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class SlotService {
+
+    private static final int MAX_SLOT_PER_TIME = 5;
+
+    private final SalonRepository salonRepository;
+
+    private final BookingRepository bookingRepository;
+
+    public SlotService(
+            SalonRepository salonRepository,
+            BookingRepository bookingRepository
+    ) {
+
+        this.salonRepository = salonRepository;
+
+        this.bookingRepository = bookingRepository;
+    }
+
+    public List<SalonAvailability> getAvailableSalons(
+            String date,
+            String time
+    ) {
+
+        List<Salon> salons =
+                salonRepository.findAll();
+
+        List<SalonAvailability> result =
+                new ArrayList<>();
+
+        LocalDate requestedDate = LocalDate.parse(date);
+
+        for (Salon salon : salons) {
+
+            long bookedSlots =
+                    bookingRepository
+                            .countBySalonIdAndBookingDateAndBookingTime(
+                                    salon.getId(),
+                                    requestedDate,
+                                    time
+                            );
+
+            int availableSlots =
+                    MAX_SLOT_PER_TIME
+                            - (int) bookedSlots;
+
+            if (availableSlots > 0) {
+
+                SalonAvailability dto =
+                        new SalonAvailability();
+
+                dto.setSalonId(
+                        salon.getId()
+                );
+
+                dto.setSalonName(
+                        salon.getName()
+                );
+
+                dto.setAvailableSlots(
+                        availableSlots
+                );
+
+                result.add(dto);
+            }
+        }
+
+        return result;
+    }
+}

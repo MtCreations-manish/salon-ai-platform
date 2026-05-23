@@ -1,0 +1,51 @@
+package com.salonai.service.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.repository.SalonRepository;
+import com.salonai.salon.service.SalonService;
+import com.salonai.service.dto.CreateServiceRequest;
+import com.salonai.service.repository.SalonServiceRepository;
+
+@Service
+public class BusinessService {
+
+    private final SalonServiceRepository salonServiceRepository;
+    private final SalonRepository salonRepository;
+
+    public BusinessService(
+            SalonServiceRepository salonServiceRepository,
+            SalonRepository salonRepository
+    ) {
+        this.salonServiceRepository = salonServiceRepository;
+        this.salonRepository = salonRepository;
+    }
+
+    public SalonService createService(
+            CreateServiceRequest request
+    ) {
+
+        Salon salon = salonRepository.findById(
+                request.getSalonId()
+        ).orElseThrow();
+
+        SalonService service = new SalonService();
+
+        service.setName(request.getName());
+        service.setDurationMinutes(
+                request.getDurationMinutes()
+        );
+        service.setPrice(request.getPrice());
+        service.setSalon(salon);
+
+        return salonServiceRepository.save(service);
+    }
+
+    public List<SalonService> getAllServices() {
+
+        return salonServiceRepository.findAll();
+    }
+}

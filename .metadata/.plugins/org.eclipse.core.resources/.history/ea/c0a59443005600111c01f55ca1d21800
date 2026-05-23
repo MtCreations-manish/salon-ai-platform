@@ -1,0 +1,96 @@
+package com.salonai.salon.service;
+
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.repository.SalonRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class SalonService {
+
+    private final SalonRepository salonRepository;
+
+    public SalonService(
+            SalonRepository salonRepository
+    ) {
+
+        this.salonRepository = salonRepository;
+    }
+
+    // =========================
+    // CREATE SALON
+    // =========================
+
+    public Salon createSalon(
+            Salon request
+    ) {
+
+        Salon salon =
+                new Salon();
+
+        salon.setName(
+                request.getName()
+        );
+
+        salon.setAddress(
+                request.getAddress()
+        );
+
+        salon.setCity(
+                request.getCity()
+        );
+
+        salon.setPhone(
+                request.getPhone()
+        );
+
+        salon.setOpeningTime(
+                request.getOpeningTime()
+        );
+
+        salon.setClosingTime(
+                request.getClosingTime()
+        );
+
+        return salonRepository.save(
+                salon
+        );
+    }
+
+    // =========================
+    // GET ALL SALONS
+    // =========================
+
+    public List<Salon> getAllSalons() {
+
+        return salonRepository.findAll();
+    }
+
+    // =========================
+    // GET SALON BY ID
+    // =========================
+
+    public Optional<Salon> getSalonById(
+            Long id
+    ) {
+
+        return salonRepository.findById(
+                id
+        );
+    }
+
+    // =========================
+    // DELETE SALON
+    // =========================
+
+    public void deleteSalon(
+            Long id
+    ) {
+
+        salonRepository.deleteById(
+                id
+        );
+    }
+}

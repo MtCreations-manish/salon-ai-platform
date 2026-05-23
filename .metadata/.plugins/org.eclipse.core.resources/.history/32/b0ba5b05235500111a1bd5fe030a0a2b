@@ -1,0 +1,11 @@
+package com.salonai.controller;
+
+@RestController
+@RequestMapping("/api/test")
+public class TestController {
+
+    @GetMapping
+    public String test() {
+        return "Backend Working";
+    }
+}

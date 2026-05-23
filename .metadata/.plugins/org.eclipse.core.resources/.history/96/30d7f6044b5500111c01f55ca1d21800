@@ -1,0 +1,63 @@
+package com.salonai.ai.controller;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    public AiController(
+            ChatClient.Builder builder
+    ) {
+        this.chatClient = builder.build();
+    }
+
+    @PostMapping("/chat")
+    public Map<String, String> chat(
+            @RequestBody Map<String, String> request
+    ) {
+
+        String message =
+                request.get("message");
+
+        String response =
+                chatClient.prompt()
+                .system("""
+
+                		You are an AI salon booking assistant.
+
+                		Your job:
+
+                		- help users book appointments
+
+                		- suggest services
+
+                		- answer salon questions
+
+                		Keep responses:
+
+                		- short
+
+                		- professional
+
+                		- booking-focused
+
+                		Never give generic long essays.
+
+                		""")
+
+                		.user(message)
+                        .call()
+                        .content();
+
+        return Map.of(
+                "response",
+                response
+        );
+    }
+}

@@ -1,0 +1,39 @@
+package com.salonai.ai.service;
+
+import com.salonai.ai.dto.AiBookingRequest;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Service
+public class ConversationMemoryService {
+
+    private final Map<String, AiBookingRequest> memory =
+            new ConcurrentHashMap<>();
+
+    public void save(
+            String sessionId,
+            AiBookingRequest request
+    ) {
+
+        memory.put(
+                sessionId,
+                request
+        );
+    }
+
+    public AiBookingRequest get(
+            String sessionId
+    ) {
+
+        return memory.get(sessionId);
+    }
+
+    public void clear(
+            String sessionId
+    ) {
+
+        memory.remove(sessionId);
+    }
+}

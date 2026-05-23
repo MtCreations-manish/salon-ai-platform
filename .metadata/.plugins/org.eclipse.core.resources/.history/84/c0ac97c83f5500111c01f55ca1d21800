@@ -1,0 +1,5 @@
+package com.salonai.booking.dto;
+
+public class CreateBookingRequest {
+
+}

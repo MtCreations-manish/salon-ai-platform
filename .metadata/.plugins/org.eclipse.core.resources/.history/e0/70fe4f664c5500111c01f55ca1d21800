@@ -1,0 +1,90 @@
+package com.salonai.ai.controller;
+
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.service.BusinessService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final BusinessService businessService;
+
+    public AiController(
+            ChatClient.Builder builder,
+            BusinessService businessService
+    ) {
+
+        this.chatClient = builder.build();
+
+        this.businessService = businessService;
+    }
+
+    @PostMapping("/chat")
+    public Map<String, String> chat(
+            @RequestBody Map<String, String> request
+    ) {
+
+        String message =
+                request.get("message");
+
+        List<SalonService> services =
+                businessService.getAllServices();
+
+        String serviceData =
+                services.stream()
+                        .map(service ->
+                                service.getName()
+                                + " - ₹"
+                                + service.getPrice()
+                                + " - "
+                                + service.getDurationMinutes()
+                                + " mins"
+                        )
+                        .collect(Collectors.joining("\n"));
+
+        String prompt = """
+                You are a salon booking AI assistant.
+
+                Available services:
+
+                %s
+
+                STRICT RULES:
+                - ONLY recommend services from the available services list
+                - NEVER say a service is unavailable if it exists in the list
+                - NEVER invent new services
+                - Keep answers very short
+                - If user asks about beard, recommend Beard Trim if available
+                - If user asks about haircut, recommend Haircut if available
+                - Respond like a real booking assistant
+                - Always encourage booking
+
+                Example response:
+                Recommended services:
+                - Beard Trim
+                - Haircut
+
+                Would you like to book an appointment?
+                """.formatted(serviceData);
+
+        String response =
+                chatClient.prompt()
+                        .system(prompt)
+                        .user(message)
+                        .call()
+                        .content();
+
+        return Map.of(
+                "response",
+                response
+        );
+    }
+}

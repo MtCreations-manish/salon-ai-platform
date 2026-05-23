@@ -1,0 +1,257 @@
+@PostMapping("/chat")
+public Object chat(
+        @RequestBody Map<String, String> body
+) {
+
+    try {
+
+        String sessionId =
+                body.get("sessionId");
+
+        String userMessage =
+                body.get("message");
+
+        if (
+                sessionId == null
+                        || sessionId.isBlank()
+        ) {
+
+            sessionId =
+                    UUID.randomUUID().toString();
+        }
+
+        String lower =
+                userMessage.toLowerCase();
+
+        // =====================================
+        // GET MEMORY
+        // =====================================
+
+        AiBookingRequest request =
+                memoryService.get(sessionId);
+
+        if (request == null) {
+
+            request =
+                    new AiBookingRequest();
+        }
+
+        // =====================================
+        // SAVE LAST MESSAGE
+        // =====================================
+
+        request.setLastMessage(
+                userMessage
+        );
+
+        // =====================================
+        // SERVICE
+        // =====================================
+
+        if (
+                lower.contains("hair")
+                        || lower.contains("cut")
+                        || lower.contains("haircut")
+        ) {
+
+            request.setService(
+                    "Haircut"
+            );
+        }
+
+        // =====================================
+        // DATE
+        // =====================================
+
+        if (
+                lower.contains("today")
+        ) {
+
+            request.setDate(
+                    LocalDate.now()
+                            .toString()
+            );
+        }
+
+        else if (
+                lower.contains("tomorrow")
+        ) {
+
+            request.setDate(
+                    LocalDate.now()
+                            .plusDays(1)
+                            .toString()
+            );
+        }
+
+        // =====================================
+        // TIME
+        // =====================================
+
+        if (
+                lower.contains("10")
+        ) {
+
+            request.setTime(
+                    "10:00 AM"
+            );
+        }
+
+        else if (
+                lower.contains("11")
+        ) {
+
+            request.setTime(
+                    "11:00 AM"
+            );
+        }
+
+        // =====================================
+        // CITY
+        // =====================================
+
+        if (
+                lower.contains("bhimtal")
+        ) {
+
+            request.setCity(
+                    "Bhimtal"
+            );
+        }
+
+        // =====================================
+        // SAVE MEMORY IMMEDIATELY
+        // =====================================
+
+        memoryService.save(
+                sessionId,
+                request
+        );
+
+        // =====================================
+        // ASK CITY
+        // =====================================
+
+        if (
+                request.getCity() == null
+        ) {
+
+            request.setUserMessage(
+                    "📍 Please tell me your city."
+            );
+
+            return request;
+        }
+
+        // =====================================
+        // ASK SERVICE
+        // =====================================
+
+        if (
+                request.getService() == null
+        ) {
+
+            request.setUserMessage(
+                    "✂️ Which service would you like?"
+            );
+
+            return request;
+        }
+
+        // =====================================
+        // ASK DATE
+        // =====================================
+
+        if (
+                request.getDate() == null
+        ) {
+
+            request.setUserMessage(
+                    "📅 Which date would you like?"
+            );
+
+            return request;
+        }
+
+        // =====================================
+        // ASK TIME
+        // =====================================
+
+        if (
+                request.getTime() == null
+        ) {
+
+            request.setUserMessage(
+                    "⏰ What time would you prefer?"
+            );
+
+            return request;
+        }
+
+        // =====================================
+        // FIND SALONS
+        // =====================================
+
+        List<Salon> salons =
+                salonService.findByCity(
+                        request.getCity()
+                );
+
+        if (
+                salons.isEmpty()
+        ) {
+
+            request.setUserMessage(
+                    "❌ No salons found in "
+                            + request.getCity()
+            );
+
+            return request;
+        }
+
+        Salon salon =
+                salons.get(0);
+
+        request.setSalonId(
+                salon.getId()
+        );
+
+        request.setSalonName(
+                salon.getName()
+        );
+
+        // =====================================
+        // SUCCESS RESPONSE
+        // =====================================
+
+        request.setUserMessage(
+                "✅ Slot available at "
+                        + salon.getName()
+                        + "\n\n"
+                        + "📅 Date: "
+                        + request.getDate()
+                        + "\n"
+                        + "⏰ Time: "
+                        + request.getTime()
+        );
+
+        memoryService.save(
+                sessionId,
+                request
+        );
+
+        return request;
+
+    } catch (Exception e) {
+
+        Map<String, Object> error =
+                new HashMap<>();
+
+        error.put(
+                "message",
+                e.getMessage()
+        );
+
+        return error;
+    }
+}

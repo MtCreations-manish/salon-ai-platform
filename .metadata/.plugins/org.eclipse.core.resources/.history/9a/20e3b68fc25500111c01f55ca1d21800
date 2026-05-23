@@ -1,0 +1,348 @@
+package com.salonai.ai.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.salonai.ai.dto.AiBookingRequest;
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.service.BusinessService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final BusinessService businessService;
+
+    private final ObjectMapper objectMapper;
+
+    public AiController(
+            ChatClient.Builder builder,
+            BusinessService businessService,
+            ObjectMapper objectMapper
+    ) {
+
+        this.chatClient = builder.build();
+
+        this.businessService = businessService;
+
+        this.objectMapper = objectMapper;
+    }
+
+    @PostMapping("/chat")
+    public Object chat(
+            @RequestBody Map<String, String> request
+    ) {
+
+        try {
+
+            String message =
+                    request.get("message");
+
+            List<SalonService> services =
+                    businessService.getAllServices();
+
+            String serviceData =
+                    services.stream()
+                            .map(SalonService::getName)
+                            .collect(Collectors.joining(", "));
+
+            String prompt = """
+                    You are a salon booking extraction engine.
+
+                    AVAILABLE SERVICES:
+                    %s
+
+                    RULES:
+                    - Return ONLY valid JSON
+                    - No markdown
+                    - No explanations
+                    - No comments
+                    - No extra text
+                    - Never invent services
+                    - If service not provided return UNKNOWN
+                    - Time format HH:mm
+                    - Return relative dates exactly as user said
+
+                    Examples:
+                    today
+                    tomorrow
+                    sunday
+                    monday
+                    next friday
+                    morning
+                    evening
+
+                    VALID RESPONSE FORMAT:
+
+                    {
+                      "intent": "",
+                      "service": "",
+                      "date": "",
+                      "time": ""
+                    }
+
+                    VALID INTENTS:
+                    BOOK
+                    RECOMMEND
+                    UNKNOWN
+                    """.formatted(serviceData);
+
+            String response =
+                    chatClient.prompt()
+                            .system(prompt)
+                            .user(message)
+                            .call()
+                            .content()
+                            .trim();
+
+            response = cleanJson(response);
+
+            AiBookingRequest aiRequest =
+                    objectMapper.readValue(
+                            response,
+                            AiBookingRequest.class
+                    );
+
+            // NORMALIZE DATE
+            aiRequest.setDate(
+                    normalizeDate(
+                            aiRequest.getDate()
+                    )
+            );
+
+            // NORMALIZE TIME
+            aiRequest.setTime(
+                    normalizeTime(
+                            aiRequest.getTime()
+                    )
+            );
+
+            // FUZZY SERVICE MATCHING
+            String matchedService = services.stream()
+                    .map(SalonService::getName)
+                    .filter(serviceName ->
+                            aiRequest.getService() != null
+                                    &&
+                                    (
+                                            serviceName.toLowerCase()
+                                                    .contains(
+                                                            aiRequest.getService()
+                                                                    .toLowerCase()
+                                                    )
+                                                    ||
+                                                    aiRequest.getService()
+                                                            .toLowerCase()
+                                                            .contains(
+                                                                    serviceName.toLowerCase()
+                                                            )
+                                    )
+                    )
+                    .findFirst()
+                    .orElse("UNKNOWN");
+
+            aiRequest.setService(matchedService);
+
+            // MISSING SERVICE DETECTION
+            if ("UNKNOWN".equalsIgnoreCase(
+                    aiRequest.getService()
+            )) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "service",
+
+                        "userMessage",
+                        "Which service would you like to book?"
+                );
+            }
+
+            // MISSING DATE
+            if (aiRequest.getDate() == null
+                    || aiRequest.getDate().isBlank()) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "date",
+
+                        "userMessage",
+                        "Please provide preferred booking date."
+                );
+            }
+
+            // MISSING TIME
+            if (aiRequest.getTime() == null
+                    || aiRequest.getTime().isBlank()) {
+
+                return Map.of(
+                        "intent",
+                        "BOOK",
+
+                        "missingField",
+                        "time",
+
+                        "userMessage",
+                        "Please provide preferred booking time."
+                );
+            }
+
+            // USER FRIENDLY MESSAGE
+            String userMessage;
+
+            if ("BOOK".equalsIgnoreCase(
+                    aiRequest.getIntent()
+            )) {
+
+                userMessage =
+                        "Your "
+                                + aiRequest.getService()
+                                + " appointment request is prepared for "
+                                + aiRequest.getDate()
+                                + " at "
+                                + aiRequest.getTime();
+
+            } else if ("RECOMMEND".equalsIgnoreCase(
+                    aiRequest.getIntent()
+            )) {
+
+                userMessage =
+                        "Recommended service: "
+                                + aiRequest.getService();
+
+            } else {
+
+                userMessage =
+                        "Please provide service, date and time for booking.";
+            }
+
+            aiRequest.setUserMessage(userMessage);
+
+            return aiRequest;
+
+        } catch (Exception e) {
+
+            return Map.of(
+                    "error",
+                    "AI parsing failed",
+
+                    "details",
+                    e.getMessage()
+            );
+        }
+    }
+
+    private String cleanJson(
+            String response
+    ) {
+
+        int start =
+                response.indexOf("{");
+
+        int end =
+                response.lastIndexOf("}");
+
+        if (start >= 0 && end >= 0) {
+
+            response =
+                    response.substring(
+                            start,
+                            end + 1
+                    );
+        }
+
+        response = response.replace("```json", "");
+
+        response = response.replace("```", "");
+
+        return response.trim();
+    }
+
+    private String normalizeDate(
+            String input
+    ) {
+
+        if (input == null
+                || input.isBlank()) {
+
+            return "";
+        }
+
+        input =
+                input.toLowerCase().trim();
+
+        LocalDate today =
+                LocalDate.now();
+
+        switch (input) {
+
+            case "today":
+                return today.toString();
+
+            case "tomorrow":
+                return today.plusDays(1).toString();
+
+            case "sunday":
+                return today.with(
+                        TemporalAdjusters.next(
+                                DayOfWeek.SUNDAY
+                        )
+                ).toString();
+
+            case "monday":
+                return today.with(
+                        TemporalAdjusters.next(
+                                DayOfWeek.MONDAY
+                        )
+                ).toString();
+
+            default:
+                return input;
+        }
+    }
+
+    private String normalizeTime(
+            String input
+    ) {
+
+        if (input == null
+                || input.isBlank()) {
+
+            return "";
+        }
+
+        input =
+                input.toLowerCase().trim();
+
+        switch (input) {
+
+            case "morning":
+                return "10:00";
+
+            case "afternoon":
+                return "14:00";
+
+            case "evening":
+                return "18:00";
+
+            case "night":
+                return "20:00";
+
+            default:
+                return input;
+        }
+    }
+}

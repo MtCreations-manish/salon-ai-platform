@@ -1,0 +1,5 @@
+package com.salonai.staff.dto;
+
+public class CreateStaffRequest {
+
+}

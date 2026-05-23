@@ -1,0 +1,186 @@
+package com.salonai.ai.controller;
+
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.repository.BookingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/ai")
+@CrossOrigin("*")
+public class AiController {
+
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @PostMapping("/chat")
+    public Object chat(@RequestBody Map<String, String> body) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        String message = body.get("message");
+
+        if (message == null || message.trim().isEmpty()) {
+
+            response.put(
+                    "reply",
+                    "Please type something."
+            );
+
+            return response;
+        }
+
+        message = message.trim().toLowerCase();
+
+        // =====================================
+        // BOOK
+        // =====================================
+
+        if (
+                message.contains("book")
+                        || message.contains("appointment")
+        ) {
+
+            response.put(
+                    "reply",
+                    "📍 Which city would you like to book in?\n\nExample:\nBhimtal\nDelhi\nMumbai"
+            );
+
+            return response;
+        }
+
+        // =====================================
+        // CITY
+        // =====================================
+
+        if (
+                message.contains("bhimtal")
+                        || message.contains("delhi")
+                        || message.contains("mumbai")
+                        || message.contains("haldwani")
+        ) {
+
+            response.put(
+                    "reply",
+                    "💇 Which service would you like?\n\nHaircut\nSpa\nFacial"
+            );
+
+            return response;
+        }
+
+        // =====================================
+        // SERVICE
+        // =====================================
+
+        if (
+                message.contains("haircut")
+                        || message.contains("spa")
+                        || message.contains("facial")
+        ) {
+
+            response.put(
+                    "reply",
+                    "📅 Which date would you like?\n\nExample:\nToday\nTomorrow\n25"
+            );
+
+            return response;
+        }
+
+        // =====================================
+        // DATE
+        // =====================================
+
+        if (
+                message.contains("today")
+                        || message.contains("tomorrow")
+                        || message.matches("\\d+")
+        ) {
+
+            response.put(
+                    "reply",
+                    "⏰ What time would you prefer?\n\nExample:\n10 AM\n5 PM"
+            );
+
+            return response;
+        }
+
+        // =====================================
+        // TIME
+        // =====================================
+
+        if (
+                message.contains("am")
+                        || message.contains("pm")
+        ) {
+
+            response.put(
+                    "reply",
+                    "📱 Please enter your 10 digit phone number."
+            );
+
+            return response;
+        }
+
+        // =====================================
+        // PHONE NUMBER
+        // =====================================
+
+        if (message.matches("\\d{10}")) {
+
+            Booking booking = new Booking();
+
+            booking.setSalonId(1L);
+
+            booking.setSalonName(
+                    "Luxury Salon"
+            );
+
+            booking.setServiceName(
+                    "Haircut"
+            );
+
+            booking.setBookingDate(
+                    LocalDate.now().plusDays(1)
+            );
+
+            booking.setBookingTime(
+                    "10 AM"
+            );
+
+            booking.setPhoneNumber(
+                    message
+            );
+
+            bookingRepository.save(
+                    booking
+            );
+
+            response.put(
+                    "reply",
+                    "✅ Booking Confirmed!\n\n"
+                            + "🏢 Salon: Luxury Salon\n"
+                            + "💇 Service: Haircut\n"
+                            + "📅 Date: Tomorrow\n"
+                            + "⏰ Time: 10 AM\n\n"
+                            + "Thank you for booking with Salon AI ✨"
+            );
+
+            return response;
+        }
+
+        // =====================================
+        // DEFAULT
+        // =====================================
+
+        response.put(
+                "reply",
+                "👋 Welcome to Salon AI\n\nTry:\nBook Haircut"
+        );
+
+        return response;
+    }
+}

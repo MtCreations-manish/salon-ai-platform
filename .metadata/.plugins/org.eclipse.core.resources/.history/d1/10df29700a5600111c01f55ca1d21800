@@ -1,0 +1,128 @@
+package com.salonai.ai.dto;
+
+public class AiBookingRequest {
+
+    private String intent;
+
+    private String service;
+
+    private String date;
+
+    private String time;
+
+    private String city;
+
+    private Long salonId;
+
+    private String salonName;
+
+    private String customerName;
+
+    private String phoneNumber;
+
+    private String userMessage;
+
+    private String missingField;
+
+    private String lastMessage;
+
+    // ====================================
+    // GETTERS & SETTERS
+    // ====================================
+
+    public String getIntent() {
+        return intent;
+    }
+
+    public void setIntent(String intent) {
+        this.intent = intent;
+    }
+
+    public String getService() {
+        return service;
+    }
+
+    public void setService(String service) {
+        this.service = service;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public Long getSalonId() {
+        return salonId;
+    }
+
+    public void setSalonId(Long salonId) {
+        this.salonId = salonId;
+    }
+
+    public String getSalonName() {
+        return salonName;
+    }
+
+    public void setSalonName(String salonName) {
+        this.salonName = salonName;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getUserMessage() {
+        return userMessage;
+    }
+
+    public void setUserMessage(String userMessage) {
+        this.userMessage = userMessage;
+    }
+
+    public String getMissingField() {
+        return missingField;
+    }
+
+    public void setMissingField(String missingField) {
+        this.missingField = missingField;
+    }
+
+    public String getLastMessage() {
+        return lastMessage;
+    }
+
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
+    }
+}

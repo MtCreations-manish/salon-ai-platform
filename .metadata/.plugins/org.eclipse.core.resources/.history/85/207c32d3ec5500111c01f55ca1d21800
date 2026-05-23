@@ -1,0 +1,35 @@
+package com.salonai.salon.controller;
+
+import com.salonai.salon.dto.SalonRequest;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.service.SalonService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/salons")
+public class SalonController {
+
+    private final SalonService salonService;
+
+    public SalonController(
+            SalonService salonService
+    ) {
+        this.salonService = salonService;
+    }
+
+    @PostMapping
+    public Salon createSalon(
+            @RequestBody SalonRequest request
+    ) {
+
+        return salonService.createSalon(request);
+    }
+
+    @GetMapping
+    public List<Salon> getAllSalons() {
+
+        return salonService.getAllSalons();
+    }
+}

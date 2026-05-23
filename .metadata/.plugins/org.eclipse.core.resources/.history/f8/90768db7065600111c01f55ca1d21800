@@ -1,0 +1,589 @@
+package com.salonai.ai.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.salonai.ai.dto.AiBookingRequest;
+import com.salonai.ai.service.ConversationMemoryService;
+import com.salonai.booking.entity.Booking;
+import com.salonai.booking.service.BookingService;
+import com.salonai.salon.entity.Salon;
+import com.salonai.salon.service.SalonService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClient.Builder;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/ai")
+@CrossOrigin("*")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final SalonService salonService;
+
+    private final BookingService bookingService;
+
+    private final ConversationMemoryService memoryService;
+
+    private final ObjectMapper objectMapper;
+
+    public AiController(
+            Builder builder,
+            SalonService salonService,
+            BookingService bookingService,
+            ConversationMemoryService memoryService,
+            ObjectMapper objectMapper
+    ) {
+
+        this.chatClient =
+                builder.build();
+
+        this.salonService =
+                salonService;
+
+        this.bookingService =
+                bookingService;
+
+        this.memoryService =
+                memoryService;
+
+        this.objectMapper =
+                objectMapper;
+    }
+
+    // =========================================================
+    // CHAT API
+    // =========================================================
+
+    @PostMapping("/chat")
+    public Object chat(
+            @RequestBody Map<String, String> body
+    ) {
+
+        try {
+
+            String sessionId =
+                    body.get("sessionId");
+
+            String userMessage =
+                    body.get("message");
+
+            if (sessionId == null ||
+                    sessionId.isBlank()) {
+
+                sessionId =
+                        UUID.randomUUID().toString();
+            }
+
+            // =====================================================
+            // GET MEMORY
+            // =====================================================
+
+            AiBookingRequest memory =
+                    memoryService.get(sessionId);
+
+            if (memory == null) {
+
+                memory =
+                        new AiBookingRequest();
+            }
+
+            AiBookingRequest request;
+
+            // =====================================================
+            // HANDLE MISSING FIELD FIRST
+            // =====================================================
+
+            if (memory.getMissingField() != null) {
+
+                request = memory;
+
+                String missing =
+                        memory.getMissingField();
+
+                switch (missing) {
+
+                    case "city" ->
+                            request.setCity(userMessage);
+
+                    case "service" ->
+                            request.setService(userMessage);
+
+                    case "date" ->
+                            request.setDate(userMessage);
+
+                    case "time" ->
+                            request.setTime(userMessage);
+
+                    case "salonName" ->
+                            request.setSalonName(userMessage);
+
+                    case "customerName" ->
+                            request.setCustomerName(userMessage);
+
+                    case "customerPhone" ->
+                            request.setCustomerPhone(userMessage);
+                }
+
+                request.setMissingField(null);
+
+            } else {
+
+                // =====================================================
+                // AI PROMPT
+                // =====================================================
+
+                String prompt = """
+                        You are an AI salon booking assistant.
+
+                        Extract these fields:
+
+                        1. intent
+                        2. service
+                        3. city
+                        4. date
+                        5. time
+                        6. salonName
+                        7. customerName
+                        8. customerPhone
+
+                        Rules:
+
+                        - Understand spelling mistakes
+                        - Convert relative dates
+                        - If field missing keep empty
+                        - Return ONLY valid JSON
+
+                        Example:
+
+                        {
+                          "intent":"BOOK",
+                          "service":"Haircut",
+                          "city":"Mumbai",
+                          "date":"2026-05-23",
+                          "time":"17:00",
+                          "salonName":"",
+                          "customerName":"",
+                          "customerPhone":""
+                        }
+
+                        User message:
+                        """ + userMessage;
+
+                // =====================================================
+                // AI CALL
+                // =====================================================
+
+                String aiResponse =
+                        chatClient.prompt()
+                                .user(prompt)
+                                .call()
+                                .content();
+
+                request =
+                        objectMapper.readValue(
+                                aiResponse,
+                                AiBookingRequest.class
+                        );
+            }
+
+            // =====================================================
+            // SERVICES
+            // =====================================================
+
+            if (contains(userMessage,
+                    "services",
+                    "service")) {
+
+                Map<String, Object> response =
+                        new HashMap<>();
+
+                response.put(
+                        "message",
+                        """
+                        ✂️ Available Services:
+
+                        • Haircut
+                        • Beard
+                        • Facial
+                        • Hair Spa
+                        • Hair Color
+                        • Cleanup
+                        """
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // ASK CITY
+            // =====================================================
+
+            if (isBlank(request.getCity())) {
+
+                request.setUserMessage(
+                        "🏙 Which city would you like to book in?"
+                );
+
+                request.setMissingField("city");
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // ASK SERVICE
+            // =====================================================
+
+            if (isBlank(request.getService())) {
+
+                request.setUserMessage(
+                        "✂️ Which service would you like to book?"
+                );
+
+                request.setMissingField("service");
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // ASK DATE
+            // =====================================================
+
+            if (isBlank(request.getDate())) {
+
+                request.setUserMessage(
+                        "📅 Which date would you like?"
+                );
+
+                request.setMissingField("date");
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // ASK TIME
+            // =====================================================
+
+            if (isBlank(request.getTime())) {
+
+                request.setUserMessage(
+                        "⏰ What time would you prefer?"
+                );
+
+                request.setMissingField("time");
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // FIND SALONS
+            // =====================================================
+
+            List<Salon> salons =
+                    salonService.findByCity(
+                            request.getCity()
+                    );
+
+            if (salons.isEmpty()) {
+
+                Map<String, Object> response =
+                        new HashMap<>();
+
+                response.put(
+                        "message",
+                        "❌ No salons found in "
+                                + request.getCity()
+                );
+
+                return response;
+            }
+
+            // =====================================================
+            // ASK SALON
+            // =====================================================
+
+            if (isBlank(request.getSalonName())) {
+
+                StringBuilder salonText =
+                        new StringBuilder();
+
+                salonText.append(
+                        "✨ Available salons in "
+                                + request.getCity()
+                                + ":\n\n"
+                );
+
+                for (Salon salon : salons) {
+
+                    int slots =
+                            bookingService.getAvailableSlots(
+                                    salon.getId(),
+                                    request.getDate()
+                            );
+
+                    salonText.append(
+                            "🏢 "
+                                    + salon.getName()
+                                    + " - "
+                                    + slots
+                                    + " slots available\n"
+                    );
+                }
+
+                salonText.append(
+                        "\nWhich salon would you like?"
+                );
+
+                request.setUserMessage(
+                        salonText.toString()
+                );
+
+                request.setMissingField(
+                        "salonName"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // ASK CUSTOMER NAME
+            // =====================================================
+
+            if (isBlank(request.getCustomerName())) {
+
+                request.setUserMessage(
+                        "👤 Please share your name"
+                );
+
+                request.setMissingField(
+                        "customerName"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // ASK PHONE
+            // =====================================================
+
+            if (isBlank(request.getCustomerPhone())) {
+
+                request.setUserMessage(
+                        "📞 Please share your phone number"
+                );
+
+                request.setMissingField(
+                        "customerPhone"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // FIND SELECTED SALON
+            // =====================================================
+
+            Optional<Salon> selectedSalon =
+                    salons.stream()
+                            .filter(s ->
+                                    s.getName()
+                                            .equalsIgnoreCase(
+                                                    request.getSalonName()
+                                            )
+                            )
+                            .findFirst();
+
+            if (selectedSalon.isEmpty()) {
+
+                request.setUserMessage(
+                        "❌ Salon not found. Please select again."
+                );
+
+                request.setMissingField(
+                        "salonName"
+                );
+
+                memoryService.save(
+                        sessionId,
+                        request
+                );
+
+                return request;
+            }
+
+            // =====================================================
+            // SAVE BOOKING
+            // =====================================================
+
+            Booking booking =
+                    new Booking();
+
+            booking.setSalonId(
+                    selectedSalon.get().getId()
+            );
+
+            booking.setSalonName(
+                    selectedSalon.get().getName()
+            );
+
+            booking.setService(
+                    request.getService()
+            );
+
+            booking.setCustomerName(
+                    request.getCustomerName()
+            );
+
+            booking.setCustomerPhone(
+                    request.getCustomerPhone()
+            );
+
+            booking.setBookingDate(
+                    LocalDate.parse(
+                            request.getDate(),
+                            DateTimeFormatter.ISO_DATE
+                    )
+            );
+
+            booking.setBookingTime(
+                    request.getTime()
+            );
+
+            bookingService.saveBooking(
+                    booking
+            );
+
+            // =====================================================
+            // SUCCESS RESPONSE
+            // =====================================================
+
+            Map<String, Object> response =
+                    new HashMap<>();
+
+            response.put(
+                    "message",
+                    """
+                    ✅ Booking Confirmed!
+
+                    👤 Name: %s
+                    📞 Phone: %s
+                    ✂️ Service: %s
+                    🏢 Salon: %s
+                    🏙 City: %s
+                    📅 Date: %s
+                    ⏰ Time: %s
+                    """
+                            .formatted(
+                                    request.getCustomerName(),
+                                    request.getCustomerPhone(),
+                                    request.getService(),
+                                    request.getSalonName(),
+                                    request.getCity(),
+                                    request.getDate(),
+                                    request.getTime()
+                            )
+            );
+
+            // =====================================================
+            // CLEAR MEMORY
+            // =====================================================
+
+            memoryService.clear(sessionId);
+
+            return response;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            Map<String, Object> error =
+                    new HashMap<>();
+
+            error.put(
+                    "error",
+                    "AI parsing failed"
+            );
+
+            error.put(
+                    "details",
+                    e.getMessage()
+            );
+
+            return error;
+        }
+    }
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+
+    private boolean isBlank(String value) {
+
+        return value == null ||
+                value.isBlank();
+    }
+
+    private boolean contains(
+            String text,
+            String... words
+    ) {
+
+        if (text == null) {
+
+            return false;
+        }
+
+        String lower =
+                text.toLowerCase();
+
+        for (String word : words) {
+
+            if (lower.contains(
+                    word.toLowerCase()
+            )) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

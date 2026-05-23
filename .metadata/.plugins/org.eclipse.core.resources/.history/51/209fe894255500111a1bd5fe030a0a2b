@@ -1,0 +1,5 @@
+package com.salonai.config;
+
+public class SecurityConfig {
+
+}

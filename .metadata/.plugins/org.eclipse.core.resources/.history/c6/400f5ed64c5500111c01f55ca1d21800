@@ -1,0 +1,93 @@
+package com.salonai.ai.controller;
+
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.service.BusinessService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final BusinessService businessService;
+
+    public AiController(
+            ChatClient.Builder builder,
+            BusinessService businessService
+    ) {
+
+        this.chatClient = builder.build();
+
+        this.businessService = businessService;
+    }
+
+    @PostMapping("/chat")
+    public Map<String, String> chat(
+            @RequestBody Map<String, String> request
+    ) {
+
+        String message =
+                request.get("message");
+
+        List<SalonService> services =
+                businessService.getAllServices();
+
+        String serviceData =
+                services.stream()
+                        .map(service ->
+                                service.getName()
+                        )
+                        .collect(Collectors.joining(", "));
+
+        String prompt = """
+                You are a salon booking AI assistant.
+
+                Available services:
+                %s
+
+                Your task:
+                Extract booking information.
+
+                STRICT RULES:
+                - NEVER invent services
+                - NEVER invent names
+                - ONLY use available services
+                - Return ONLY JSON
+                - No explanation
+                - No markdown
+
+                JSON format:
+
+                {
+                  "intent": "",
+                  "service": "",
+                  "date": "",
+                  "time": ""
+                }
+
+                If booking request detected:
+                intent = BOOK
+
+                If recommendation request:
+                intent = RECOMMEND
+                """.formatted(serviceData);
+
+        String response =
+                chatClient.prompt()
+                        .system(prompt)
+                        .user(message)
+                        .call()
+                        .content();
+
+        return Map.of(
+                "response",
+                response
+        );
+    }
+}

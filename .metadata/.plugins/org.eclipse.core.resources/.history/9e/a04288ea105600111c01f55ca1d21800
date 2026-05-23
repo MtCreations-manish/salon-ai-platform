@@ -1,0 +1,86 @@
+package com.salonai.booking.entity;
+
+import jakarta.persistence.*;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "bookings")
+public class Booking {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long salonId;
+
+    private String salonName;
+
+    private String serviceName;
+
+    private LocalDate bookingDate;
+
+    private String bookingTime;
+
+    private String phoneNumber;
+
+    // =====================================
+    // GETTERS & SETTERS
+    // =====================================
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getSalonId() {
+        return salonId;
+    }
+
+    public void setSalonId(Long salonId) {
+        this.salonId = salonId;
+    }
+
+    public String getSalonName() {
+        return salonName;
+    }
+
+    public void setSalonName(String salonName) {
+        this.salonName = salonName;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public LocalDate getBookingDate() {
+        return bookingDate;
+    }
+
+    public void setBookingDate(LocalDate bookingDate) {
+        this.bookingDate = bookingDate;
+    }
+
+    public String getBookingTime() {
+        return bookingTime;
+    }
+
+    public void setBookingTime(String bookingTime) {
+        this.bookingTime = bookingTime;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+}

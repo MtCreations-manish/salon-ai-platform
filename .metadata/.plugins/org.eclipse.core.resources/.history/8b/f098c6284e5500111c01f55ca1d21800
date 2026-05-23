@@ -1,0 +1,143 @@
+package com.salonai.ai.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.salonai.ai.dto.AiBookingRequest;
+import com.salonai.service.entity.SalonService;
+import com.salonai.service.service.BusinessService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+
+    private final ChatClient chatClient;
+
+    private final BusinessService businessService;
+
+    private final ObjectMapper objectMapper;
+
+    public AiController(
+            ChatClient.Builder builder,
+            BusinessService businessService,
+            ObjectMapper objectMapper
+    ) {
+
+        this.chatClient = builder.build();
+
+        this.businessService = businessService;
+
+        this.objectMapper = objectMapper;
+    }
+
+    @PostMapping("/chat")
+    public Object chat(
+            @RequestBody Map<String, String> request
+    ) {
+
+        String message =
+                request.get("message");
+
+        List<SalonService> services =
+                businessService.getAllServices();
+
+        String serviceData =
+                services.stream()
+                        .map(SalonService::getName)
+                        .collect(Collectors.joining(", "));
+
+        String prompt = """
+                You are a salon booking extraction engine.
+
+                AVAILABLE SERVICES:
+                %s
+
+                TODAY DATE:
+                2026-05-22
+
+                RULES:
+                - Return ONLY valid JSON
+                - No markdown
+                - No explanation
+                - No comments
+                - No extra text
+                - Use ONLY available services
+                - If unavailable service use UNKNOWN
+                - Convert relative dates properly
+                - Time format HH:mm
+
+                VALID RESPONSE:
+
+                {
+                  "intent": "",
+                  "service": "",
+                  "date": "",
+                  "time": ""
+                }
+
+                VALID INTENTS:
+                BOOK
+                RECOMMEND
+                UNKNOWN
+                """.formatted(serviceData);
+
+        try {
+
+            String response =
+                    chatClient.prompt()
+                            .system(prompt)
+                            .user(message)
+                            .call()
+                            .content()
+                            .trim();
+
+            response = cleanJson(response);
+
+            AiBookingRequest aiRequest =
+                    objectMapper.readValue(
+                            response,
+                            AiBookingRequest.class
+                    );
+
+            boolean validService =
+                    services.stream()
+                            .anyMatch(service ->
+                                    service.getName()
+                                            .equalsIgnoreCase(
+                                                    aiRequest.getService()
+                                            )
+                            );
+
+            if (!validService) {
+
+                aiRequest.setService("UNKNOWN");
+            }
+
+            return aiRequest;
+
+        } catch (Exception e) {
+
+            return Map.of(
+                    "error",
+                    "AI parsing failed",
+                    "details",
+                    e.getMessage()
+            );
+        }
+    }
+
+    private String cleanJson(
+            String response
+    ) {
+
+        response = response.replace("```json", "");
+
+        response = response.replace("```", "");
+
+        return response.trim();
+    }
+}

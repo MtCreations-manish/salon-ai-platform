@@ -1,0 +1,123 @@
+package com.salonai.ai.service;
+
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+public class ConversationMemoryService {
+
+    // =========================
+    // sessionId -> memory map
+    // =========================
+
+    private final Map<String, Map<String, String>>
+            conversationMemory =
+            new HashMap<>();
+
+    // =========================
+    // SAVE MEMORY
+    // =========================
+
+    public void saveMemory(
+            String sessionId,
+            String key,
+            String value
+    ) {
+
+        conversationMemory.putIfAbsent(
+                sessionId,
+                new HashMap<>()
+        );
+
+        conversationMemory
+                .get(sessionId)
+                .put(key, value);
+    }
+
+    // =========================
+    // GET COMPLETE MEMORY
+    // =========================
+
+    public Map<String, String> getMemory(
+            String sessionId
+    ) {
+
+        return conversationMemory.getOrDefault(
+                sessionId,
+                new HashMap<>()
+        );
+    }
+
+    // =========================
+    // GET SINGLE VALUE
+    // =========================
+
+    public String getValue(
+            String sessionId,
+            String key
+    ) {
+
+        Map<String, String> memory =
+                conversationMemory.get(sessionId);
+
+        if (memory == null) {
+
+            return null;
+        }
+
+        return memory.get(key);
+    }
+
+    // =========================
+    // CHECK FIELD EXISTS
+    // =========================
+
+    public boolean hasKey(
+            String sessionId,
+            String key
+    ) {
+
+        Map<String, String> memory =
+                conversationMemory.get(sessionId);
+
+        if (memory == null) {
+
+            return false;
+        }
+
+        return memory.containsKey(key);
+    }
+
+    // =========================
+    // CLEAR MEMORY
+    // =========================
+
+    public void clearMemory(
+            String sessionId
+    ) {
+
+        conversationMemory.remove(
+                sessionId
+        );
+    }
+
+    // =========================
+    // REMOVE SINGLE KEY
+    // =========================
+
+    public void removeKey(
+            String sessionId,
+            String key
+    ) {
+
+        Map<String, String> memory =
+                conversationMemory.get(sessionId);
+
+        if (memory != null) {
+
+            memory.remove(key);
+        }
+    }
+}

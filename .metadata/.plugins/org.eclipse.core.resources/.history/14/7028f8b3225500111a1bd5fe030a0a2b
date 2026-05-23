@@ -1,0 +1,5 @@
+package com.salonai.users.repository;
+
+public class UserRepository {
+
+}

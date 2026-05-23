@@ -1,0 +1,5 @@
+package com.salonai.booking.repository;
+
+public class BookingRepository {
+
+}
