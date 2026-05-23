@@ -1,0 +1,24 @@
+spring.application.name=backend
+
+server.port=8080
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/salon_ai
+spring.datasource.username=salon_user
+spring.datasource.password=password
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+spring.ai.openai.api-key=${OPENAI_API_KEY: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}
+
+spring.ai.openai.chat.options.model=gpt-4.1-mini
+spring.ai.openai.chat.options.temperature=0.3
+
+# spring.ai.ollama.base-url=http://localhost:11434
+
+# spring.ai.ollama.chat.model=phi3
+
+# AI TIMEOUT
+
+spring.ai.openai.chat.options.max-tokens=200
