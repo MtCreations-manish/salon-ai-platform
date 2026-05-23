@@ -86,19 +86,29 @@ public class BookingService {
     }
 
     // =========================================
-    // OVERLOADED METHOD
+    // GET AVAILABLE SLOTS BY TIME
     // =========================================
 
     public int getAvailableSlots(
             Long salonId,
-            String service,
-            String bookingDate
+            String bookingDate,
+            String bookingTime
     ) {
 
-        return getAvailableSlots(
-                salonId,
-                bookingDate
-        );
+        LocalDate date =
+                LocalDate.parse(bookingDate);
+
+        long bookedSlots =
+                bookingRepository
+                        .countBySalonIdAndBookingDateAndBookingTime(
+                                salonId,
+                                date,
+                                bookingTime
+                        );
+
+        int maxSlotsPerTime = 5;
+
+        return maxSlotsPerTime - (int) bookedSlots;
     }
 
     // =========================================
