@@ -8,15 +8,15 @@ spring.application.name=backend
 
 
 
-spring.datasource.url=${SPRINGDATASOURCEURL}
+spring.datasource.url=${SPRING_DATASOURCE_URL}
 
-spring.datasource.username=${SPRINGDATASOURCEUSERNAME}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
 
-spring.datasource.password=${SPRINGDATASOURCEPASSWORD}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 
-spring.jpa.hibernate.ddl-auto=${SPRINGPAHIBERNATEDDLAUTO}
+spring.jpa.hibernate.ddl-auto=${SPRING_JPA_HIBERNATE_DDL_AUTO}
 
-spring.jpa.show-sql=${SPRINGJPASHOWSQL}
+spring.jpa.show-sql=${SPRING_JPA_SHOW_SQL}
 
 
 
