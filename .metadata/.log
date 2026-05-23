@@ -4719,3 +4719,73 @@ java.util.concurrent.TimeoutException
 
 !ENTRY org.eclipse.m2e.logback.appender 2 0 2026-05-23 16:05:17.713
 !MESSAGE Plugin is modifying testCompileSourceRoots through add(), which will not work in Maven 4.0.0. Use MavenProject.addTestCompileSourceRoot()/removeTestCompileSourceRoot() methods instead. If using a plugin, please upgrade to the latest version or report the issue to the plugin maintainer. To disable these warnings, set -Dmaven.project.sourceRoots.warningsDisabled=true on the command line, in the .mvn/maven.config file, or in project POM properties.
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:12.059
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[fetchCompletions] Request 0002d71c-89e3-488c-9bbc-a6334fe2ce68 at <https://proxy.individual.githubcopilot.com/v1/engines/gpt-41-copilot/completions> finished with 200 status after 746.4525839984417ms
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:12.134
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[streamChoices] solution 0 returned. finish reason: [stop]
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:12.463
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[fetchCompletions] Request 2bf77449-7c75-4f48-aabb-044e0ff48a6f at <https://proxy.individual.githubcopilot.com/v1/engines/gpt-41-copilot/completions> finished with 200 status after 312.984749995172ms
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:12.547
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[streamChoices] solution 0 returned. finish reason: [stop]
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:58.993
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[fetchCompletions] Request 03be5e80-b994-4848-994c-55bc71844bb8 at <https://proxy.individual.githubcopilot.com/v1/engines/gpt-41-copilot/completions> finished with 200 status after 346.6912499964237ms
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:59.112
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[streamChoices] solution 0 returned. finish reason: [stop]
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:59.485
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[fetchCompletions] Request a28f78c8-0cc6-4cd8-8eb1-4a7f19e080b7 at <https://proxy.individual.githubcopilot.com/v1/engines/gpt-41-copilot/completions> finished with 200 status after 313.92145899683237ms
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:09:59.497
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[streamChoices] solution 0 returned. finish reason: [stop]
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:10:00.481
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[fetchCompletions] Request 5012832f-66e4-4252-8638-be88dc055574 at <https://proxy.individual.githubcopilot.com/v1/engines/gpt-41-copilot/completions> finished with 200 status after 313.5175830051303ms
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:10:00.568
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[streamChoices] solution 0 returned. finish reason: [stop]
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:10:00.897
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[fetchCompletions] Request 89cc9d16-fff9-4796-97cc-481c6ea87272 at <https://proxy.individual.githubcopilot.com/v1/engines/gpt-41-copilot/completions> finished with 200 status after 300.22487500309944ms
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:10:00.900
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[streamChoices] solution 0 returned. finish reason: [stop]
+
+!ENTRY org.eclipse.lsp4e 4 0 2026-05-23 16:10:00.972
+!MESSAGE [LS:GitHub Copilot Language Server][Error]	[AsyncCompletionManager] [89cc9d16-fff9-4796-97cc-481c6ea87272] Request errored with AbortError: The operation was aborted.
+    at AbortSignal.abortHandler (/snapshot/cls-source/dist/main.js:1503:30641)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    at AbortSignal.dispatchEvent (node:internal/event_target:776:26)
+    at runAbort (node:internal/abort_controller:486:10)
+    at abortSignal (node:internal/abort_controller:457:3)
+    at AbortController.abort (node:internal/abort_controller:505:5)
+    at /snapshot/cls-source/dist/main.js:1779:25355
+    at uEt.invoke (/snapshot/cls-source/dist/main.js:9:89306)
+    at t.fire (/snapshot/cls-source/dist/main.js:9:90116)
+    at J5e.cancel (/snapshot/cls-source/dist/main.js:9:91094) {
+  type: 'aborted',
+  _name: 'AbortError'
+}
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:10:01.264
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[fetchCompletions] Request 7a093d49-5d1f-4a3a-bccf-0fbe47201ed4 at <https://proxy.individual.githubcopilot.com/v1/engines/gpt-41-copilot/completions> finished with 200 status after 292.17904099822044ms
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:10:01.271
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[streamChoices] solution 0 returned. finish reason: [stop]
+
+!ENTRY org.eclipse.m2e.logback.appender 2 0 2026-05-23 16:10:05.198
+!MESSAGE Plugin is modifying compileSourceRoots through clear(), which will not work in Maven 4.0.0. Use MavenProject.addCompileSourceRoot()/removeCompileSourceRoot() methods instead. If using a plugin, please upgrade to the latest version or report the issue to the plugin maintainer. To disable these warnings, set -Dmaven.project.sourceRoots.warningsDisabled=true on the command line, in the .mvn/maven.config file, or in project POM properties.
+
+!ENTRY org.eclipse.m2e.logback.appender 2 0 2026-05-23 16:10:05.202
+!MESSAGE Plugin is modifying compileSourceRoots through add(), which will not work in Maven 4.0.0. Use MavenProject.addCompileSourceRoot()/removeCompileSourceRoot() methods instead. If using a plugin, please upgrade to the latest version or report the issue to the plugin maintainer. To disable these warnings, set -Dmaven.project.sourceRoots.warningsDisabled=true on the command line, in the .mvn/maven.config file, or in project POM properties.
+
+!ENTRY org.eclipse.m2e.logback.appender 2 0 2026-05-23 16:10:05.205
+!MESSAGE Plugin is modifying testCompileSourceRoots through clear(), which will not work in Maven 4.0.0. Use MavenProject.addTestCompileSourceRoot()/removeTestCompileSourceRoot() methods instead. If using a plugin, please upgrade to the latest version or report the issue to the plugin maintainer. To disable these warnings, set -Dmaven.project.sourceRoots.warningsDisabled=true on the command line, in the .mvn/maven.config file, or in project POM properties.
+
+!ENTRY org.eclipse.m2e.logback.appender 2 0 2026-05-23 16:10:05.205
+!MESSAGE Plugin is modifying testCompileSourceRoots through add(), which will not work in Maven 4.0.0. Use MavenProject.addTestCompileSourceRoot()/removeTestCompileSourceRoot() methods instead. If using a plugin, please upgrade to the latest version or report the issue to the plugin maintainer. To disable these warnings, set -Dmaven.project.sourceRoots.warningsDisabled=true on the command line, in the .mvn/maven.config file, or in project POM properties.
