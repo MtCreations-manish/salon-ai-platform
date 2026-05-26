@@ -20,5 +20,24 @@ public interface BookingRepository
             String bookingTime
     );
 
+    long countBySalonIdAndBookingDateAndBookingTimeAndStatusNot(
+            Long salonId,
+            LocalDate bookingDate,
+            String bookingTime,
+            String status
+    );
+
+    long countBySalonIdAndBookingDateAndStatusNot(
+            Long salonId,
+            LocalDate bookingDate,
+            String status
+    );
+
+    List<Booking> findBySalonIdOrderByBookingDateDescBookingTimeDesc(Long salonId);
+
+    List<Booking> findTop10BySalonIdOrderByBookingDateDescBookingTimeDesc(Long salonId);
+
+    List<Booking> findBySessionIdOrderByIdDesc(String sessionId);
+
 //    List<Booking> findBySalonIdAndBookingDate(Long salonId, LocalDate date);
 }

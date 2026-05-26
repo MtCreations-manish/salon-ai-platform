@@ -9,8 +9,11 @@ import org.springframework.stereotype.Service;
 
 import com.salonai.booking.entity.Booking;
 import com.salonai.booking.repository.BookingRepository;
+import com.salonai.notification.service.NotificationService;
 import com.salonai.salon.entity.Salon;
 import com.salonai.salon.repository.SalonRepository;
+import com.salonai.staff.entity.Staff;
+import com.salonai.staff.repository.StaffRepository;
 
 @Service
 public class BookingService {
@@ -20,6 +23,12 @@ public class BookingService {
 
     @Autowired
     private SalonRepository salonRepository;
+
+    @Autowired
+    private StaffRepository staffRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // =========================================
     // CREATE BOOKING
@@ -42,6 +51,7 @@ public class BookingService {
         Booking booking = new Booking();
 
         booking.setSalon(salon);
+        booking.setSessionId(sessionId);
 
         booking.setCustomerName(customerName);
 
@@ -57,7 +67,12 @@ public class BookingService {
 
         booking.setStatus("CONFIRMED");
 
-        return bookingRepository.save(booking);
+        Staff assignedStaff = assignStaff(salonId);
+        booking.setAssignedStaff(assignedStaff);
+
+        Booking savedBooking = bookingRepository.save(booking);
+        notificationService.bookingCreated(savedBooking);
+        return savedBooking;
     }
 
     // =========================================
@@ -78,7 +93,10 @@ public class BookingService {
                         date
                 );
 
-        int totalSlots = 10;
+        Salon salon = salonRepository.findById(salonId)
+                .orElseThrow(() -> new RuntimeException("Salon not found"));
+
+        int totalSlots = capacityFor(salon);
 
         int bookedSlots = bookings.size();
 
@@ -98,15 +116,19 @@ public class BookingService {
         LocalDate date =
                 LocalDate.parse(bookingDate);
 
+        Salon salon = salonRepository.findById(salonId)
+                .orElseThrow(() -> new RuntimeException("Salon not found"));
+
         long bookedSlots =
                 bookingRepository
-                        .countBySalonIdAndBookingDateAndBookingTime(
+                        .countBySalonIdAndBookingDateAndBookingTimeAndStatusNot(
                                 salonId,
                                 date,
-                                bookingTime
+                                bookingTime,
+                                "CANCELLED"
                         );
 
-        int maxSlotsPerTime = 5;
+        int maxSlotsPerTime = capacityFor(salon);
 
         return maxSlotsPerTime - (int) bookedSlots;
     }
@@ -129,15 +151,13 @@ public class BookingService {
     ) {
 
         List<Booking> bookings =
-                bookingRepository.findAll();
+                bookingRepository.findBySessionIdOrderByIdDesc(sessionId);
 
         if (bookings.isEmpty()) {
             return Optional.empty();
         }
 
-        return Optional.of(
-                bookings.get(bookings.size() - 1)
-        );
+        return Optional.of(bookings.get(0));
     }
 
     // =========================================
@@ -154,5 +174,36 @@ public class BookingService {
         booking.setStatus("CANCELLED");
 
         bookingRepository.save(booking);
+    }
+
+    public List<Booking> getBookingsBySalon(Long salonId) {
+        return bookingRepository.findBySalonIdOrderByBookingDateDescBookingTimeDesc(salonId);
+    }
+
+    public List<Booking> getUpcomingBookings(Long salonId) {
+        return bookingRepository.findTop10BySalonIdOrderByBookingDateDescBookingTimeDesc(salonId);
+    }
+
+    public int getOccupiedSlots(Long salonId, LocalDate date) {
+        return (int) bookingRepository.countBySalonIdAndBookingDateAndStatusNot(
+                salonId,
+                date,
+                "CANCELLED"
+        );
+    }
+
+    private int capacityFor(Salon salon) {
+        if (salon.getMaxBookingCapacity() == null || salon.getMaxBookingCapacity() < 1) {
+            return 1;
+        }
+        return salon.getMaxBookingCapacity();
+    }
+
+    private Staff assignStaff(Long salonId) {
+        return staffRepository
+                .findBySalonIdAndAvailableTrueAndAttendanceStatusIgnoreCase(salonId, "PRESENT")
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 }

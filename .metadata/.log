@@ -4843,3 +4843,151 @@ java.util.concurrent.TimeoutException
 
 !ENTRY org.eclipse.lsp4e 1 0 2026-05-23 16:43:25.713
 !MESSAGE [LS:GitHub Copilot Language Server][Info]	[AutoModelService] Auto model cache cleared due to token update
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 17:08:27.001
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[AutoModelService] Auto model cache cleared due to token update
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 17:33:28.314
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[AutoModelService] Auto model cache cleared due to token update
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-23 17:58:29.661
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[AutoModelService] Auto model cache cleared due to token update
+
+!ENTRY org.springframework.tooling.boot.ls 1 0 2026-05-23 18:07:56.595
+!MESSAGE DelegatingStreamConnectionProvider - Stopping Boot LS
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.015
+!MESSAGE [Info] Document is null for editor: User.java
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.015
+!MESSAGE [Info] Completion handler is refreshed for the document: file:///Users/groott-tech/Documents/salon-ai-platform/backend/src/main/java/com/salonai/users/entity/User.java
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.115
+!MESSAGE [Info] Document is null for editor: StaffService.java
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.116
+!MESSAGE [Info] Completion handler is refreshed for the document: file:///Users/groott-tech/Documents/salon-ai-platform/backend/src/main/java/com/salonai/staff/service/StaffService.java
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.175
+!MESSAGE [Info] Document is null for editor: AiController.java
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.175
+!MESSAGE [Info] Completion handler is refreshed for the document: file:///Users/groott-tech/Documents/salon-ai-platform/backend/src/main/java/com/salonai/ai/controller/AiController.java
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.212
+!MESSAGE [Info] Document is null for editor: Dockerfile
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.213
+!MESSAGE [Info] Completion handler is refreshed for the document: file:///Users/groott-tech/Documents/salon-ai-platform/backend/Dockerfile
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.259
+!MESSAGE [Info] Document is null for editor: application.properties
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-23 18:07:57.260
+!MESSAGE [Info] Completion handler is refreshed for the document: file:///Users/groott-tech/Documents/salon-ai-platform/backend/src/main/resources/application.properties
+!SESSION 2026-05-26 17:56:03.408 -----------------------------------------------
+eclipse.buildId=4.39.0.202603170703
+java.version=25.0.2
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=aarch64, WS=cocoa, NL=en_IN
+Framework arguments:  -product org.springframework.boot.ide.branding.springtools -keyring /Users/groott-tech/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch aarch64 -product org.springframework.boot.ide.branding.springtools -keyring /Users/groott-tech/.eclipse_keyring
+
+!ENTRY ch.qos.logback.classic 1 0 2026-05-26 17:56:11.073
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-05-26 17:56:16.807
+!MESSAGE Logback config file: /Users/groott-tech/Documents/salon-ai-platform/.metadata/.plugins/org.eclipse.m2e.logback/logback.2.7.101.20251017-1242.xml
+
+!ENTRY org.eclipse.ui 2 0 2026-05-26 17:56:17.065
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2026-05-26 17:56:17.065
+!MESSAGE Commands should really have a category: plug-in='org.springframework.tooling.boot.ls', id='spring.initializr.addStarters', categoryId='org.eclipse.lsp4e.commandCategory'
+
+!ENTRY org.eclipse.ui 2 0 2026-05-26 17:56:17.349
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2026-05-26 17:56:17.349
+!MESSAGE Commands should really have a category: plug-in='org.springframework.tooling.boot.ls', id='spring.initializr.addStarters', categoryId='org.eclipse.lsp4e.commandCategory'
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-26 17:56:24.205
+!MESSAGE [Info] Starting language server with binary lsp agent.
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-26 17:56:24.205
+!MESSAGE [Info] Found native binary in fragment bundle: com.microsoft.copilot.eclipse.core.agent.macosx.aarch64
+
+!ENTRY com.microsoft.copilot.eclipse 1 0 2026-05-26 17:56:24.298
+!MESSAGE [Info] Binary agent started successfully.
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:31.670
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[lsp] GitHub Copilot Language Server 1.488.0 initialized
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:31.750
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[UndiciFetcher] HTTP settings changed; resetting Undici dispatchers. {
+  proxy: 'none',
+  noProxyCount: 0,
+  proxyStrictSSL: true,
+  hasProxyAuthorization: false,
+  hasProxyKerberosServicePrincipal: false
+}
+
+!ENTRY org.eclipse.lsp4e 2 0 2026-05-26 17:56:31.753
+!MESSAGE [LS:GitHub Copilot Language Server][Warning]	[McpAutoApproveService] Invalid McpAutoApproveService config, resetting to empty undefined
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:31.794
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[default] Policy watcher started for GitHub Copilot Plugin
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:32.154
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[UndiciFetcher] Root certificate set changed; resetting Undici dispatchers. { certificateCount: 304 }
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:32.164
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[ripgrep] Using tmpFolder for ripgrep: /Users/groott-tech/.cache/pkg/28bcfffbaed35d3f102d905a51fe3685d8af504ffd7ab6b1dd243c5b9e78678b
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:32.171
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[ripgrep] Set GITHUB_COPILOT_RIPGREP_PATH_OVERRIDE=/Users/groott-tech/.cache/pkg/28bcfffbaed35d3f102d905a51fe3685d8af504ffd7ab6b1dd243c5b9e78678b/rg
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:32.172
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[ripgrep] Resolved ripgrep path: /Users/groott-tech/.cache/pkg/28bcfffbaed35d3f102d905a51fe3685d8af504ffd7ab6b1dd243c5b9e78678b/rg
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:32.597
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[GithubAvailableEmbeddingTypes] Got embeddings. Primary: metis-1024-I16-Binary. Deprecated: 
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:33.540
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[AutoModelService] Auto model cache cleared due to token update
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:33.540
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[Semantic Search] Semantic search is disabled { reason: 'watchedFiles capability is not available' }
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:33.541
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[CopilotMCP] MCP state changed from false to true
+
+!ENTRY org.eclipse.lsp4e 1 0 2026-05-26 17:56:33.594
+!MESSAGE [LS:GitHub Copilot Language Server][Info]	[BackgroundAgent] GitHub identity changed, clearing cached sessions {
+  hadPrevious: false,
+  hasCurrent: true,
+  cachedSessionCount: 0,
+  remoteDelegateCount: 0
+}
+
+!ENTRY org.eclipse.lsp4e 2 0 2026-05-26 17:56:33.773
+!MESSAGE [LS:GitHub Copilot Language Server][Warning]	[McpAutoApproveService] Invalid McpAutoApproveService config, resetting to empty undefined
+
+!ENTRY org.eclipse.jface 2 0 2026-05-26 17:56:33.976
+!MESSAGE Keybinding conflicts occurred.  They may interfere with normal accelerator operation.
+!SUBENTRY 1 org.eclipse.jface 2 0 2026-05-26 17:56:33.977
+!MESSAGE A conflict occurred for COMMAND+SHIFT+T:
+Binding(COMMAND+SHIFT+T,
+	ParameterizedCommand(Command(org.eclipse.jdt.ui.navigate.open.type,Open Type,
+		Open a type in a Java editor,
+		Category(org.eclipse.ui.category.navigate,Navigate,null,true),
+		WorkbenchHandlerServiceHandler("org.eclipse.jdt.ui.navigate.open.type"),
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)
+Binding(COMMAND+SHIFT+T,
+	ParameterizedCommand(Command(org.eclipse.lsp4e.symbolInWorkspace,Go to Symbol in Workspace,
+		,
+		Category(org.eclipse.lsp4e.category,Language Servers,null,true),
+		WorkbenchHandlerServiceHandler("org.eclipse.lsp4e.symbolInWorkspace"),
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)

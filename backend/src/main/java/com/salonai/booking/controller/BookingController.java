@@ -7,11 +7,14 @@ import com.salonai.salon.repository.SalonRepository;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/bookings")
+@CrossOrigin("*")
 public class BookingController {
 
     private final BookingService bookingService;
@@ -164,7 +167,7 @@ public class BookingController {
                 booking.getId(),
 
                 "salon",
-                booking.getSalon().getSalonName(),
+                booking.getSalon() == null ? null : booking.getSalon().getSalonName(),
 
                 "customerName",
                 booking.getCustomerName(),
@@ -181,6 +184,14 @@ public class BookingController {
                 "bookingTime",
                 booking.getBookingTime()
         );
+    }
+
+    @GetMapping
+    public List<Booking> getBookings(@RequestParam(required = false) Long salonId) {
+        if (salonId != null) {
+            return bookingService.getBookingsBySalon(salonId);
+        }
+        return bookingService.getAllBookings();
     }
 
     @GetMapping("/slots")
@@ -211,6 +222,23 @@ public class BookingController {
 
                 "availableSlots",
                 availableSlots
+        );
+    }
+
+    @GetMapping("/dashboard")
+    public Map<String, Object> dashboard(@RequestParam Long salonId) {
+        LocalDate today = LocalDate.now();
+        List<Booking> bookings = bookingService.getBookingsBySalon(salonId);
+        long todayBookings = bookings.stream()
+                .filter(b -> today.equals(b.getBookingDate()))
+                .count();
+        int occupiedSlots = bookingService.getOccupiedSlots(salonId, today);
+
+        return Map.of(
+                "totalBookings", bookings.size(),
+                "todayBookings", todayBookings,
+                "occupiedSlots", occupiedSlots,
+                "upcomingAppointments", bookingService.getUpcomingBookings(salonId)
         );
     }
 

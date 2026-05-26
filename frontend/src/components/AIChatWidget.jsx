@@ -1,16 +1,38 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { MessageCircle, Send, Sparkles, X } from 'lucide-react'
 import { sendMessage } from '../services/api'
 
-const ChatBubble = ({ from, text }) => {
+const ChatBubble = ({ from, text, options = [], onOptionClick }) => {
   const isAI = from === 'ai'
   return (
     <div className={`max-w-[80%] ${isAI ? 'self-start' : 'self-end'} mb-2`}> 
-      <div className={`${isAI ? 'ai-bubble-ai' : 'ai-bubble-user'} px-4 py-2 rounded-lg shadow-sm`}>{text}</div>
+      <div
+        className={`whitespace-pre-line rounded-lg px-4 py-3 text-sm leading-6 shadow-sm ${
+          isAI
+            ? 'bg-[#f9efe1] text-[#221d18]'
+            : 'bg-[#d6a65d] text-[#15120f]'
+        }`}
+      >
+        {text}
+      </div>
+      {isAI && options.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {options.map((option) => (
+            <button
+              key={option}
+              onClick={() => onOptionClick(option)}
+              className="rounded-full border border-[#d6a65d]/40 bg-[#221d18] px-3 py-1.5 text-xs font-semibold text-[#f9efe1] transition hover:bg-[#2d261f]"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-const AIChatWidget = () => {
+const AIChatWidget = ({ salonId }) => {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -53,17 +75,22 @@ const AIChatWidget = () => {
     }
   }, [messages])
 
-  const handleSend = async () => {
-    if (!input.trim()) return
-    const userMsg = { from: 'user', text: input }
+  const handleSend = async (overrideText = '') => {
+    const finalInput = overrideText || input
+    if (!finalInput.trim()) return
+    const userMsg = { from: 'user', text: finalInput }
     setMessages((m) => [...m, userMsg])
     setInput('')
     setLoading(true)
     try {
-      const res = await sendMessage(userMsg.text, sessionId)
+      const res = await sendMessage(userMsg.text, sessionId, salonId)
+      if (res.sessionId && res.sessionId !== sessionId) {
+        setSessionId(res.sessionId)
+        localStorage.setItem('ai_session_id', res.sessionId)
+      }
       const aiText =
         res.reply || res.message || res.data?.response || 'No response'
-      setMessages((m) => [...m, { from: 'ai', text: aiText }])
+      setMessages((m) => [...m, { from: 'ai', text: aiText, options: res.options || [] }])
     } catch (err) {
       setMessages((m) => [...m, { from: 'ai', text: 'Error: failed to reach AI service.' }])
     } finally {
@@ -79,58 +106,71 @@ const AIChatWidget = () => {
   }
 
   return (
-    <div className="fixed inset-x-4 bottom-4 z-50 flex justify-end md:inset-x-auto md:right-4 md:bottom-6">
-      <div className="flex flex-col items-end">
+    <div className="fixed inset-x-4 bottom-5 z-[100] flex justify-end pointer-events-none md:inset-x-auto md:right-5 md:bottom-6">
+      <div className="flex w-full max-w-[430px] flex-col items-end pointer-events-auto">
         <button
           onClick={() => setOpen((s) => !s)}
-          className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 shadow-2xl shadow-indigo-500/20 text-base font-semibold text-white transition hover:bg-indigo-500"
+          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-[#15120f] px-5 text-sm font-semibold text-[#f9efe1] shadow-2xl shadow-black/25 transition hover:bg-[#2a241f] active:scale-[0.98]"
           aria-label="Toggle AI chat"
           aria-expanded={open}
         >
-          AI
+          <Sparkles className="h-4 w-4 text-[#d6a65d]" />
+          Book with AI
+          <MessageCircle className="h-4 w-4" />
         </button>
 
-        <div className={`mt-3 w-full max-w-lg ${open ? 'block' : 'hidden'}`}>
-          <div className="glass-2 flex h-[88vw] max-h-[520px] flex-col rounded-[28px] border border-white/10 p-4 shadow-2xl md:h-[420px]">
-            <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
+        <div className={`mt-3 w-full ${open ? 'block' : 'hidden'}`}>
+          <div className="flex h-[78vh] max-h-[560px] min-h-[420px] flex-col rounded-lg border border-[#2b241e]/10 bg-[#15120f] p-4 shadow-2xl shadow-black/30">
+            <div className="mb-3 flex items-center justify-between border-b border-[#f9efe1]/10 pb-3">
               <div>
-                <p className="text-sm font-semibold text-white">Salon AI</p>
-                <p className="text-xs text-slate-400">Tap Enter to send, Shift+Enter for a new line.</p>
+                <p className="text-sm font-semibold text-[#f9efe1]">Salon AI concierge</p>
+                <p className="text-xs text-[#b8aa97]">Fast booking, staff assignment, live slots.</p>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-full border border-white/10 bg-slate-900/80 px-2 py-1 text-xs text-slate-300 transition hover:bg-slate-800"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#f9efe1]/10 bg-[#221d18] text-[#f9efe1] transition hover:bg-[#2d261f]"
                 aria-label="Close chat widget"
               >
-                Close
+                <X className="h-4 w-4" />
               </button>
             </div>
 
             <div ref={listRef} className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
               {messages.length === 0 ? (
-                <div className="text-sm text-slate-400">Ask the AI assistant to help book a slot.</div>
+                <div className="rounded-lg bg-[#221d18] p-4 text-sm leading-6 text-[#d8cabb]">
+                  Hi, I can reserve your salon appointment. Tell me the service and preferred time.
+                </div>
               ) : (
-                messages.map((m, idx) => <ChatBubble key={idx} from={m.from} text={m.text} />)
+                messages.map((m, idx) => (
+                  <ChatBubble
+                    key={idx}
+                    from={m.from}
+                    text={m.text}
+                    options={m.options}
+                    onOptionClick={(option) => handleSend(option)}
+                  />
+                ))
               )}
             </div>
 
-            <div className="mt-3 border-t border-white/10 pt-3">
+            <div className="mt-3 border-t border-[#f9efe1]/10 pt-3">
               <textarea
                 rows={2}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Try: Book beard trim tomorrow at 5 PM"
-                className="w-full rounded-3xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                placeholder="Book haircut tomorrow at 5 PM"
+                className="w-full rounded-lg border border-[#f9efe1]/10 bg-[#0f0d0b] px-4 py-3 text-[#f9efe1] outline-none transition placeholder:text-[#8f8170] focus:border-[#d6a65d] focus:ring-2 focus:ring-[#d6a65d]/20"
               />
               <div className="mt-3 flex items-center justify-between gap-3">
-                <div className="text-xs text-slate-400">Enter to send</div>
+                <div className="text-xs text-[#b8aa97]">{salonId ? 'Salon selected' : 'Marketplace booking'}</div>
                 <button
                   onClick={handleSend}
-                  className="inline-flex items-center justify-center rounded-3xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#d6a65d] px-4 py-2 text-sm font-semibold text-[#15120f] transition hover:bg-[#e4b96d] disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={loading}
                 >
-                  {loading ? 'Thinking…' : 'Send'}
+                  {loading ? 'Thinking...' : 'Send'}
+                  <Send className="h-4 w-4" />
                 </button>
               </div>
             </div>

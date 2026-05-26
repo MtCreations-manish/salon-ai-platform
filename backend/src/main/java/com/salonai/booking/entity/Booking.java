@@ -3,6 +3,7 @@ package com.salonai.booking.entity;
 import java.time.LocalDate;
 
 import com.salonai.salon.entity.Salon;
+import com.salonai.staff.entity.Staff;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,9 +33,15 @@ public class Booking {
 
     private String status;
 
+    private String sessionId;
+
     @ManyToOne
     @JoinColumn(name = "salon_id")
     private Salon salon;
+
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    private Staff assignedStaff;
 
     public Booking() {
     }
@@ -95,11 +102,27 @@ public class Booking {
         this.status = status;
     }
 
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
     public Salon getSalon() {
         return salon;
     }
 
     public void setSalon(Salon salon) {
         this.salon = salon;
+    }
+
+    public Staff getAssignedStaff() {
+        return assignedStaff;
+    }
+
+    public void setAssignedStaff(Staff assignedStaff) {
+        this.assignedStaff = assignedStaff;
     }
 }

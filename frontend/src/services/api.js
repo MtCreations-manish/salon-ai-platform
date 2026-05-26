@@ -1,6 +1,23 @@
-const BASE_URL =
-  "https://salon-ai-platform-4.onrender.com";
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const SESSION_KEY = "ai_session_id";
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 12000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 function getSessionId() {
   if (typeof localStorage === "undefined") {
@@ -9,42 +26,24 @@ function getSessionId() {
 
   let sessionId = localStorage.getItem(SESSION_KEY);
   if (!sessionId) {
-    sessionId = `ai-session-${Date.now()}`;
+    sessionId =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `ai-session-${Date.now()}`;
     localStorage.setItem(SESSION_KEY, sessionId);
   }
 
   return sessionId;
 }
 
-export async function sendMessage(
-  message,
-  sessionId
-) {
+export async function sendMessage(message, sessionId, salonId) {
   const effectiveSessionId = sessionId || getSessionId();
-
-  const response =
-    await fetch(
-      `${BASE_URL}/api/ai/chat`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body: JSON.stringify({
-          sessionId: effectiveSessionId,
-
-          message
-        })
-      }
-    );
-
-  const data = await response.json();
-  if (data?.sessionId) {
-    localStorage.setItem(SESSION_KEY, data.sessionId);
-  }
-
-  return data;
+  const response = await api.post("/api/ai/chat", {
+    sessionId: effectiveSessionId,
+    salonId,
+    message,
+  });
+  return response.data;
 }
+
+export default api;

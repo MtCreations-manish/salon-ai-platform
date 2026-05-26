@@ -6,6 +6,14 @@ public class CreateStaffRequest {
 
     private String role;
 
+    private String phone;
+
+    private String specialization;
+
+    private Boolean available;
+
+    private String attendanceStatus;
+
     private String startTime;
 
     private String endTime;
@@ -30,6 +38,38 @@ public class CreateStaffRequest {
             String role
     ) {
         this.role = role;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getSpecialization() {
+        return specialization;
+    }
+
+    public void setSpecialization(String specialization) {
+        this.specialization = specialization;
+    }
+
+    public Boolean getAvailable() {
+        return available;
+    }
+
+    public void setAvailable(Boolean available) {
+        this.available = available;
+    }
+
+    public String getAttendanceStatus() {
+        return attendanceStatus;
+    }
+
+    public void setAttendanceStatus(String attendanceStatus) {
+        this.attendanceStatus = attendanceStatus;
     }
 
     public String getStartTime() {
